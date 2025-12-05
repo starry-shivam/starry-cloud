@@ -1,0 +1,94 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ cfg.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="{{ cfg.notes[:150] if cfg.notes else '' }}" />
+  <meta name="theme-color" content="#020617" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='berry.png') }}" />
+
+  <!-- iOS installable -->
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='berry.png') }}">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="header-main">
+        {% if cfg.logo_url %}
+        <div class="logo-wrap">
+          <img src="{{ cfg.logo_url }}" alt="Logo" class="logo" loading="lazy" />
+        </div>
+        {% endif %}
+        <div class="title-wrap">
+          <h1 class="title">{{ cfg.title }}</h1>
+          {% if cfg.subtitle %}
+          <p class="subtitle">{{ cfg.subtitle }}</p>
+          {% endif %}
+          {% if cfg.hostname %}
+          <span class="hostname-pill">
+            <span class="dot" id="statusDot"></span>
+            {{ cfg.hostname }}
+          </span>
+          {% endif %}
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌓</button>
+      </div>
+    </header>
+
+    {% if cfg.notes %}
+    <section class="notes">
+      <p>{{ cfg.notes }}</p>
+    </section>
+    {% endif %}
+
+    <main class="main">
+      <section aria-label="Self-hosted services">
+        <div class="section-header">
+          <h2>Services</h2>
+          <span class="count-badge">{{ services|length }}</span>
+        </div>
+
+        {% if services %}
+        <div class="services-grid">
+          {% for svc in services %}
+          <a class="service-card" href="{{ svc.url }}" target="_blank" rel="noopener noreferrer">
+            <div class="service-header">
+              <div class="service-emoji" aria-hidden="true">
+                {{ svc.emoji or "🌐" }}
+              </div>
+              <h3 class="service-name">{{ svc.name }}</h3>
+            </div>
+            {% if svc.description %}
+            <p class="service-description">{{ svc.description }}</p>
+            {% endif %}
+            <p class="service-url">{{ svc.url }}</p>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty">No services configured yet.</p>
+        {% endif %}
+      </section>
+    </main>
+
+    <!--
+    <footer class="footer">
+      <small>
+        Meow
+      </small>
+    </footer>
+    -->
+    
+  </div>
+  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+</body>
+</html>
