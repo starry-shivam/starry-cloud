@@ -1,100 +1,76 @@
-(function () {
-  const THEME_KEY = "theme";
-  const STATUS_CHECK_INTERVAL = 5000; // ms
-  const STATUS_ENDPOINT = "/";
+(function() {
+    const THEME_KEY = "theme";
+    const STATUS_ENDPOINT = "/";
+    const STATUS_INTERVAL = 5000;
 
-  /* ---------------------------
-   * Theme handling
-   * ------------------------- */
-
-  function applySavedTheme(root) {
-    const saved = localStorage.getItem(THEME_KEY);
-
-    if (saved === "light" || saved === "dark") {
-      root.setAttribute("data-theme", saved);
-    } else {
-      // follow system preference
-      root.removeAttribute("data-theme");
-    }
-  }
-
-  function toggleTheme(root) {
-    const current = root.getAttribute("data-theme");
-
-    const newTheme =
-      current === "dark" ? "light" :
-      current === "light" ? "dark" :
-      matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark";
-
-    root.setAttribute("data-theme", newTheme);
-    localStorage.setItem(THEME_KEY, newTheme);
-  }
-
-  function initTheme() {
     const root = document.documentElement;
-    applySavedTheme(root);
+    const icon = document.getElementById("themeIcon");
 
-    const btn = document.getElementById("themeToggle");
-    if (!btn) return;
+    function setIcon(theme) {
+        if (!icon) return;
 
-    btn.addEventListener("click", () => toggleTheme(root));
-  }
-
-  // Set current year in footer
-  document.getElementById("year").textContent = new Date().getFullYear();
-
-  /* ---------------------------
-   * Service worker
-   * ------------------------- */
-
-  function registerServiceWorker() {
-    if (!("serviceWorker" in navigator)) return;
-
-    navigator.serviceWorker
-      .register("/static/js/sw.js")
-      .catch(err => {
-        console.error("Service worker registration failed:", err);
-      });
-  }
-
-  /* ---------------------------
-   * Status dot / host check
-   * ------------------------- */
-
-  async function updateStatusDot() {
-    const dot = document.getElementById("statusDot");
-    if (!dot) return; // nothing to update
-
-    try {
-      const res = await fetch(STATUS_ENDPOINT, { method: "HEAD" });
-
-      if (res.ok) {
-        dot.style.background = "#22c55e"; // green
-        dot.style.boxShadow = "0 0 0 4px rgba(34, 197, 94, 0.25)";
-      } else {
-        throw new Error("Not OK");
-      }
-    } catch (e) {
-      dot.style.background = "#ef4444"; // red
-      dot.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.25)";
+        if (theme === "dark") {
+            // Moon
+            icon.innerHTML = `
+      <path d="M21 12.79A9 9 0 1111.21 3
+               7 7 0 0021 12.79z" />
+    `;
+        } else {
+            // Sun
+            icon.innerHTML = `
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    `;
+        }
     }
-  }
 
-  function startStatusPolling() {
-    updateStatusDot(); // initial
-    setInterval(updateStatusDot, STATUS_CHECK_INTERVAL);
-  }
 
-  /* ---------------------------
-   * Bootstrapping
-   * ------------------------- */
+    function applyTheme() {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved) root.setAttribute("data-theme", saved);
+        setIcon(saved || "light");
+    }
 
-  // DOM-dependent init
-  document.addEventListener("DOMContentLoaded", () => {
-    initTheme();
-    startStatusPolling();
-  });
+    function toggleTheme() {
+        const current = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", current);
+        localStorage.setItem(THEME_KEY, current);
+        setIcon(current);
+    }
 
-  // SW should wait until full load
-  window.addEventListener("load", registerServiceWorker);
+    document.getElementById("themeToggle")?.addEventListener("click", toggleTheme);
+
+    async function updateStatus() {
+        const dot = document.getElementById("statusDot");
+        const pill = dot?.parentElement;
+        if (!dot || !pill) return;
+
+        try {
+            const res = await fetch("/", {
+                method: "HEAD"
+            });
+            if (res.ok) {
+                pill.classList.add("status-online");
+                pill.classList.remove("status-offline");
+            } else {
+                throw new Error();
+            }
+        } catch {
+            pill.classList.add("status-offline");
+            pill.classList.remove("status-online");
+        }
+    }
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    applyTheme();
+    updateStatus();
+    setInterval(updateStatus, STATUS_INTERVAL);
 })();

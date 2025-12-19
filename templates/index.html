@@ -1,92 +1,89 @@
-
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>{{ cfg.title }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="{{ cfg.notes[:150] if cfg.notes else '' }}" />
-  <meta name="theme-color" content="#020617" />
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-
-  <!-- PWA -->
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}" />
-  <link rel="icon" href="{{ url_for('static', filename='berry.png') }}" />
-
-  <!-- iOS installable -->
-<link rel="apple-touch-icon" href="{{ url_for('static', filename='berry.png') }}">
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-</head>
-<body>
-  <div class="page">
-    <header class="header">
-      <div class="header-main">
-        {% if cfg.logo_url %}
-        <div class="logo-wrap">
-          <img src="{{ cfg.logo_url }}" alt="Logo" class="logo" loading="lazy" />
-        </div>
-        {% endif %}
-        <div class="title-wrap">
-          <h1 class="title">{{ cfg.title }}</h1>
-          {% if cfg.subtitle %}
-          <p class="subtitle">{{ cfg.subtitle }}</p>
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ cfg.title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="{{ cfg.notes[:150] if cfg.notes else '' }}" />
+    <meta name="theme-color" content="#000000" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='berry.png') }}" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='berry.png') }}">
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <div class="header-main">
+          {% if cfg.logo_url %}
+          <img src="{{ cfg.logo_url }}" class="logo" alt="Logo">
           {% endif %}
-          {% if cfg.hostname %}
-          <span class="hostname-pill">
+          <div class="title-wrap">
+            <h1 class="title">{{ cfg.title }}</h1>
+            {% if cfg.subtitle %}
+            <p class="subtitle">{{ cfg.subtitle }}</p>
+            {% endif %}
+            {% if cfg.hostname %}
+            <span class="hostname-pill">
             <span class="dot" id="statusDot"></span>
             {{ cfg.hostname }}
-          </span>
-          {% endif %}
-        </div>
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌓</button>
-      </div>
-    </header>
-
-    {% if cfg.notes %}
-    <section class="notes">
-      <p>{{ cfg.notes }}</p>
-    </section>
-    {% endif %}
-
-    <main class="main">
-      <section aria-label="Self-hosted services">
-        <div class="section-header">
-          <h2>Services</h2>
-          <span class="count-badge">{{ services|length }}</span>
-        </div>
-
-        {% if services %}
-        <div class="services-grid">
-          {% for svc in services %}
-          <a class="service-card" href="{{ svc.url }}" target="_blank" rel="noopener noreferrer">
-            <div class="service-header">
-              <div class="service-emoji" aria-hidden="true">
-                {{ svc.emoji or "🌐" }}
-              </div>
-              <h3 class="service-name">{{ svc.name }}</h3>
-            </div>
-            {% if svc.description %}
-            <p class="service-description">{{ svc.description }}</p>
+            </span>
             {% endif %}
-            <p class="service-url">{{ svc.url }}</p>
-          </a>
-          {% endfor %}
+          </div>
+          <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <svg id="themeIcon"
+              width="22" height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round">
+              <!-- SUN ICON (default) -->
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+          </button>
         </div>
-        {% else %}
-        <p class="empty">No services configured yet.</p>
-        {% endif %}
+      </header>
+      {% if cfg.notes %}
+      <section class="notes">
+        {{ cfg.notes }}
       </section>
-    </main>
-
-    <footer class="footer" style="text-align: center;">
-      <small>
-        &copy; <span id="year"></span> Starry ⚝ | Powered by Raspberry Pi 5
-      </small>
-    </footer>
-    
-  </div>
-  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
-</body>
+      {% endif %}
+      <main>
+        <section>
+          <div class="section-header">
+            <h2>Services</h2>
+            <span class="count-badge">{{ services|length }}</span>
+          </div>
+          <div class="services-grid">
+            {% for svc in services %}
+            <a class="service-card" href="{{ svc.url }}" target="_blank">
+              <div class="service-header">
+                <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>
+                <h3 class="service-name">{{ svc.name }}</h3>
+              </div>
+              {% if svc.description %}
+              <p class="service-description">{{ svc.description }}</p>
+              {% endif %}
+              <p class="service-url">{{ svc.url }}</p>
+            </a>
+            {% endfor %}
+          </div>
+        </section>
+      </main>
+      <footer class="footer">
+        © <span id="year"></span> Starry ⚝ | Powered by Raspberry Pi 5
+      </footer>
+    </div>
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+  </body>
 </html>
