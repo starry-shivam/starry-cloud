@@ -141,11 +141,14 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  width: fit-content;
+  max-width: max-content;
   margin-top: 0.25rem;
   padding: 0.25rem 0.6rem;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
   font-size: 0.75rem;
+   white-space: nowrap;
 }
 
 .status-online {
