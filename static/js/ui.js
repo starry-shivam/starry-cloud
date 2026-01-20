@@ -13,13 +13,12 @@
     }
 
     function setAutoIcon() {
-        if (!icon) return;
+    if (!icon) return;
 
-        // Half sun / moon icon
-        icon.innerHTML = `
-            <path d="M12 2a10 10 0 000 20V2z"></path>
-            <circle cx="12" cy="12" r="10" fill="none"></circle>
-        `;
+    icon.innerHTML = `
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 3v18"></path>
+    `;
     }
 
     function setIcon(theme, mode) {
