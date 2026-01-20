@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="{{ cfg.notes[:150] if cfg.notes else '' }}" />
     <meta name="theme-color" content="#000000" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}" />
-    <link rel="icon" href="{{ url_for('static', filename='berry.png') }}" />
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='berry.png') }}">
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="manifest" href="/static/manifest.webmanifest" />
+    <link rel="icon" href="/static/berry.png" />
+    <link rel="apple-touch-icon" href="/static/berry.png">
   </head>
   <body>
     <div class="page">
@@ -84,6 +84,6 @@
         © <span id="year"></span> Starry ⚝ | Powered by Raspberry Pi 5
       </footer>
     </div>
-    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+   <script src="/static/js/ui.js"></script>
   </body>
 </html>

@@ -2,9 +2,13 @@
 const CACHE_NAME = "starry-cloud-v1";
 const ASSETS = [
   "/",
+  "/index.html",
   "/static/style.css",
-  "/static/manifest.webmanifest"
+  "/static/js/ui.js",
+  "/static/manifest.webmanifest",
+  "/static/berry.png"
 ];
+
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

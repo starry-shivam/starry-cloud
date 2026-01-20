@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Starry Cloud",
   "short_name": "StarryCloud",
   "start_url": "/",
@@ -7,6 +8,7 @@
   "orientation": "portrait-primary",
   "background_color": "#020617",
   "theme_color": "#020617",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/static/berry.png",
