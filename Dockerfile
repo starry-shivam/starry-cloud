@@ -1,30 +1,25 @@
-# Use a small Python image
-FROM python:3.12-slim
+# -------- BUILD STAGE --------
+FROM python:3.12-alpine AS builder
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+WORKDIR /build
 
-# Create app directory
-WORKDIR /app
+RUN pip install --no-cache-dir pyyaml jinja2
 
-# Install system deps (optional but nice to have)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-  && rm -rf /var/lib/apt/lists/*
+COPY config.yml .
+COPY templates ./templates
+COPY static ./static
+COPY render.py .
 
-# Install Python dependencies
-COPY requirements.txt .
-# Add gunicorn for production serving
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN python render.py
 
-# Copy app code
-COPY . .
 
-# Default config path inside container
-ENV STARRYCLOUD_CONFIG=/app/config.yml
-ENV FLASK_ENV=production
+# -------- RUNTIME STAGE --------
+FROM busybox:uclibc
+
+WORKDIR /www
+
+COPY --from=builder /build/site /www
 
 EXPOSE 5000
 
-# Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--workers", "1", "--threads", "4"]
+CMD ["httpd", "-f", "-p", "5000", "-h", "/www"]

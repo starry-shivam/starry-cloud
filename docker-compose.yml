@@ -3,15 +3,5 @@ services:
     container_name: starry-cloud
     build: .
     restart: unless-stopped
-
-    # Expose on host port 5000 → container 5000
     ports:
       - "5000:5000"
-
-    # Keep config.yml outside the image so you can edit without rebuilding
-    volumes:
-      - ./config.yml:/config/config.yml:ro
-
-    environment:
-      # Tell the app to use the mounted config path
-      STARRYCLOUD_CONFIG: /config/config.yml
