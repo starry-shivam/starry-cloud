@@ -1,4 +1,4 @@
-(function () {
+(function() {
     const THEME_KEY = "theme";
     const STATUS_INTERVAL = 5000;
 
@@ -13,9 +13,9 @@
     }
 
     function setAutoIcon() {
-       if (!icon) return;
+        if (!icon) return;
 
-       icon.innerHTML = `
+        icon.innerHTML = `
           <!-- Outer circle -->
           <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"></circle>
 
@@ -58,7 +58,7 @@
             `;
         }
     }
-    
+
     function applyTheme() {
         const saved = localStorage.getItem(THEME_KEY) || "auto";
 
@@ -101,7 +101,9 @@
         if (!dot || !pill) return;
 
         try {
-            const res = await fetch("/", { method: "HEAD" });
+            const res = await fetch("/", {
+                method: "HEAD"
+            });
 
             if (res.ok) {
                 pill.classList.add("status-online");
@@ -115,8 +117,31 @@
         }
     }
 
-    // init
+    async function updateServiceStatuses() {
+        const dots = document.querySelectorAll(".service-status-dot");
 
+        dots.forEach(async dot => {
+            const url = dot.dataset.url;
+
+            try {
+                const res = await fetch(url, {
+                    method: "HEAD",
+                    mode: "no-cors"
+                });
+
+                // no-cors always returns opaque if reachable
+                dot.classList.add("online");
+                dot.classList.remove("offline");
+
+            } catch {
+                dot.classList.add("offline");
+                dot.classList.remove("online");
+            }
+        });
+    }
+
+
+    // init
     const yearEl = document.getElementById("year");
     if (yearEl) {
         yearEl.textContent = new Date().getFullYear();
@@ -124,6 +149,12 @@
 
     applyTheme();
     updateStatus();
-    setInterval(updateStatus, STATUS_INTERVAL);
+    updateServiceStatuses();
+
+    setInterval(() => {
+        updateStatus();
+        updateServiceStatuses();
+    }, STATUS_INTERVAL);
+
 
 })();

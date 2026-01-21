@@ -9,36 +9,38 @@
     <link rel="stylesheet" href="/static/style.css" />
     <link rel="manifest" href="/static/manifest.webmanifest" />
     <link rel="icon" href="/static/berry.png" />
-    <link rel="apple-touch-icon" href="/static/berry.png">
+    <link rel="apple-touch-icon" href="/static/berry.png" />
   </head>
   <body>
     <div class="page">
       <header class="header">
         <div class="header-main">
           {% if cfg.logo_url %}
-          <img src="{{ cfg.logo_url }}" class="logo" alt="Logo">
+          <img src="{{ cfg.logo_url }}" class="logo" alt="Logo" />
           {% endif %}
           <div class="title-wrap">
             <h1 class="title">{{ cfg.title }}</h1>
             {% if cfg.subtitle %}
             <p class="subtitle">{{ cfg.subtitle }}</p>
-            {% endif %}
-            {% if cfg.hostname %}
+            {% endif %} {% if cfg.hostname %}
             <span class="hostname-pill">
-            <span class="dot" id="statusDot"></span>
-            {{ cfg.hostname }}
+              <span class="dot" id="statusDot"></span>
+              {{ cfg.hostname }}
             </span>
             {% endif %}
           </div>
           <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-            <svg id="themeIcon"
-              width="22" height="22"
+            <svg
+              id="themeIcon"
+              width="22"
+              height="22"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               stroke-width="1.75"
               stroke-linecap="round"
-              stroke-linejoin="round">
+              stroke-linejoin="round"
+            >
               <!-- SUN ICON (default) -->
               <circle cx="12" cy="12" r="5" />
               <line x1="12" y1="1" x2="12" y2="3" />
@@ -54,9 +56,7 @@
         </div>
       </header>
       {% if cfg.notes %}
-      <section class="notes">
-        {{ cfg.notes }}
-      </section>
+      <section class="notes">{{ cfg.notes }}</section>
       {% endif %}
       <main>
         <section>
@@ -68,6 +68,7 @@
             {% for svc in services %}
             <a class="service-card" href="{{ svc.url }}" target="_blank">
               <div class="service-header">
+                <span class="service-status-dot" data-url="{{ svc.url }}"></span>
                 <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>
                 <h3 class="service-name">{{ svc.name }}</h3>
               </div>
@@ -80,10 +81,8 @@
           </div>
         </section>
       </main>
-      <footer class="footer">
-        © <span id="year"></span> Starry ⚝ | Powered by Raspberry Pi 5
-      </footer>
+      <footer class="footer">© <span id="year"></span> Starry ⚝ | Powered by Raspberry Pi 5</footer>
     </div>
-   <script src="/static/js/ui.js"></script>
+    <script src="/static/js/ui.js"></script>
   </body>
 </html>

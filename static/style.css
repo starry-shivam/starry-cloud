@@ -310,6 +310,38 @@ body {
 }
 
 /* =========================
+   SERVICE STATUS DOT
+   ========================= */
+
+.service-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #999;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.service-status-dot.online {
+  background: #22c55e;
+}
+
+.service-status-dot.offline {
+  background: #ef4444;
+}
+
+.service-status-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.5;
+  animation: pulse 1.6s ease-out infinite;
+}
+
+
+/* =========================
    FOOTER
    ========================= */
 
