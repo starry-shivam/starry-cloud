@@ -68,9 +68,11 @@
             {% for svc in services %}
             <a class="service-card" href="{{ svc.url }}" target="_blank">
               <div class="service-header">
+                <div class="service-left">
+                  <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>
+                  <h3 class="service-name">{{ svc.name }}</h3>
+                </div>
                 <span class="service-status-dot" data-url="{{ svc.url }}"></span>
-                <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>
-                <h3 class="service-name">{{ svc.name }}</h3>
               </div>
               {% if svc.description %}
               <p class="service-description">{{ svc.description }}</p>

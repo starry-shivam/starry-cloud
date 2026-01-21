@@ -312,14 +312,27 @@ body {
 /* =========================
    SERVICE STATUS DOT
    ========================= */
+   
+.service-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.service-left {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
 
 .service-status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #999;
+  background: #777;
   flex-shrink: 0;
   position: relative;
+  margin-left: 0.75rem;
 }
 
 .service-status-dot.online {
@@ -336,10 +349,9 @@ body {
   inset: 0;
   border-radius: 50%;
   background: inherit;
-  opacity: 0.5;
+  opacity: 0.6;
   animation: pulse 1.6s ease-out infinite;
 }
-
 
 /* =========================
    FOOTER
