@@ -117,30 +117,6 @@
         }
     }
 
-    async function updateServiceStatuses() {
-        const dots = document.querySelectorAll(".service-status-dot");
-
-        dots.forEach(async dot => {
-            const url = dot.dataset.url;
-
-            try {
-                const res = await fetch(url, {
-                    method: "HEAD",
-                    mode: "no-cors"
-                });
-
-                // no-cors always returns opaque if reachable
-                dot.classList.add("online");
-                dot.classList.remove("offline");
-
-            } catch {
-                dot.classList.add("offline");
-                dot.classList.remove("online");
-            }
-        });
-    }
-
-
     // init
     const yearEl = document.getElementById("year");
     if (yearEl) {
@@ -149,11 +125,9 @@
 
     applyTheme();
     updateStatus();
-    updateServiceStatuses();
 
     setInterval(() => {
         updateStatus();
-        updateServiceStatuses();
     }, STATUS_INTERVAL);
 
 

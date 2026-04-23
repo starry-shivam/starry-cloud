@@ -325,34 +325,6 @@ body {
   gap: 0.7rem;
 }
 
-.service-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #777;
-  flex-shrink: 0;
-  position: relative;
-  margin-left: 0.75rem;
-}
-
-.service-status-dot.online {
-  background: #22c55e;
-}
-
-.service-status-dot.offline {
-  background: #ef4444;
-}
-
-.service-status-dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: inherit;
-  opacity: 0.6;
-  animation: pulse 1.6s ease-out infinite;
-}
-
 /* =========================
    FOOTER
    ========================= */
