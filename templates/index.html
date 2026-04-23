@@ -12,6 +12,9 @@
     <link rel="apple-touch-icon" href="/static/berry.png" />
   </head>
   <body>
+    <div id="loader" class="loader-overlay" aria-hidden="true">
+      <div class="loader-spinner"></div>
+    </div>
     <div class="page">
       <header class="header">
         <div class="header-main">
@@ -66,7 +69,7 @@
           </div>
           <div class="services-grid">
             {% for svc in services %}
-            <a class="service-card" href="{{ svc.url }}" target="_blank">
+            <a class="service-card" href="{{ svc.url }}" target="_blank" style="--card-index: {{ loop.index0 }}">
               <div class="service-header">
                 <div class="service-left">
                   <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>

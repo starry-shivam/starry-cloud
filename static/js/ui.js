@@ -123,6 +123,13 @@
         yearEl.textContent = new Date().getFullYear();
     }
 
+    // Hide page loader
+    const loader = document.getElementById("loader");
+    if (loader) {
+        loader.classList.add("loader-hidden");
+        setTimeout(() => loader.remove(), 380);
+    }
+
     applyTheme();
     updateStatus();
 
