@@ -110,7 +110,7 @@
         applyTheme();
     }
 
-    function registerServiceWorker() {
+    async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
 
         try {
