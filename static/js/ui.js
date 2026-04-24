@@ -9,8 +9,6 @@
     const root = document.documentElement;
     const icon = document.getElementById("themeIcon");
     const toggleBtn = document.getElementById("themeToggle");
-    const installBtn = document.getElementById("installBtn");
-    let deferredInstallPrompt = null;
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -112,7 +110,7 @@
         applyTheme();
     }
 
-    async function registerServiceWorker() {
+    function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return;
 
         try {
@@ -124,29 +122,6 @@
         }
     }
 
-    function setupInstallPrompt() {
-        if (!installBtn) return;
-
-        window.addEventListener("beforeinstallprompt", (event) => {
-            event.preventDefault();
-            deferredInstallPrompt = event;
-            installBtn.hidden = false;
-        });
-
-        window.addEventListener("appinstalled", () => {
-            deferredInstallPrompt = null;
-            installBtn.hidden = true;
-        });
-
-        installBtn.addEventListener("click", async () => {
-            if (!deferredInstallPrompt) return;
-
-            deferredInstallPrompt.prompt();
-            await deferredInstallPrompt.userChoice;
-            deferredInstallPrompt = null;
-            installBtn.hidden = true;
-        });
-    }
 
     toggleBtn?.addEventListener("click", toggleTheme);
     mediaQuery.addEventListener("change", () => {
@@ -194,7 +169,6 @@
 
     applyTheme();
     registerServiceWorker();
-    setupInstallPrompt();
     updateStatus();
 
     setInterval(() => {
