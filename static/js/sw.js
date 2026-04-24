@@ -2,7 +2,6 @@
 const CACHE_NAME = "starry-cloud-v1";
 const ASSETS = [
   "/",
-  "/index.html",
   "/static/style.css",
   "/static/js/ui.js",
   "/static/manifest.webmanifest",

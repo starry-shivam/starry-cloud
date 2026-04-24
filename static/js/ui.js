@@ -1,10 +1,16 @@
 (function() {
     const THEME_KEY = "theme";
     const STATUS_INTERVAL = 5000;
+    const THEME_COLORS = {
+        light: "#ffffff",
+        dark: "#020617"
+    };
 
     const root = document.documentElement;
     const icon = document.getElementById("themeIcon");
     const toggleBtn = document.getElementById("themeToggle");
+    const installBtn = document.getElementById("installBtn");
+    let deferredInstallPrompt = null;
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -59,6 +65,25 @@
         }
     }
 
+    function syncBrowserChrome(theme) {
+        const color = THEME_COLORS[theme] || THEME_COLORS.light;
+
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+            themeColorMeta.setAttribute("content", color);
+        }
+
+        const appleStatusBarMeta = document.querySelector(
+            'meta[name="apple-mobile-web-app-status-bar-style"]'
+        );
+        if (appleStatusBarMeta) {
+            appleStatusBarMeta.setAttribute(
+                "content",
+                theme === "dark" ? "black-translucent" : "default"
+            );
+        }
+    }
+
     function applyTheme() {
         const saved = localStorage.getItem(THEME_KEY) || "auto";
 
@@ -67,6 +92,7 @@
 
         root.setAttribute("data-theme", themeToApply);
         setIcon(themeToApply, saved);
+        syncBrowserChrome(themeToApply);
 
         // Optional: tooltip label
         if (toggleBtn) {
@@ -84,6 +110,42 @@
 
         localStorage.setItem(THEME_KEY, next);
         applyTheme();
+    }
+
+    async function registerServiceWorker() {
+        if (!("serviceWorker" in navigator)) return;
+
+        try {
+            await navigator.serviceWorker.register("/static/js/sw.js", {
+                scope: "/"
+            });
+        } catch (err) {
+            console.error("Service worker registration failed:", err);
+        }
+    }
+
+    function setupInstallPrompt() {
+        if (!installBtn) return;
+
+        window.addEventListener("beforeinstallprompt", (event) => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            installBtn.hidden = false;
+        });
+
+        window.addEventListener("appinstalled", () => {
+            deferredInstallPrompt = null;
+            installBtn.hidden = true;
+        });
+
+        installBtn.addEventListener("click", async () => {
+            if (!deferredInstallPrompt) return;
+
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            installBtn.hidden = true;
+        });
     }
 
     toggleBtn?.addEventListener("click", toggleTheme);
@@ -131,6 +193,8 @@
     }
 
     applyTheme();
+    registerServiceWorker();
+    setupInstallPrompt();
     updateStatus();
 
     setInterval(() => {

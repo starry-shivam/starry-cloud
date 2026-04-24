@@ -5,7 +5,8 @@
     <title>{{ cfg.title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="{{ cfg.notes[:150] if cfg.notes else '' }}" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="stylesheet" href="/static/style.css" />
     <link rel="manifest" href="/static/manifest.webmanifest" />
     <link rel="icon" href="/static/berry.png" />
@@ -56,6 +57,7 @@
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
           </button>
+          <button class="install-btn" id="installBtn" type="button" hidden>Install App</button>
         </div>
       </header>
       {% if cfg.notes %}

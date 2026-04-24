@@ -304,6 +304,34 @@ body::after {
   transform: scale(0.88);
 }
 
+.install-btn {
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+  border: 1px solid var(--glass-border);
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    transform 0.18s var(--ease-spring),
+    background 0.18s var(--ease-std),
+    box-shadow 0.18s var(--ease-std);
+}
+
+.install-btn:hover {
+  background: var(--glass-bg-hover);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.install-btn:active {
+  transform: scale(0.95);
+}
+
 /* =========================
    NOTES
    ========================= */
