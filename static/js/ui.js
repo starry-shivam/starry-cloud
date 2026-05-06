@@ -1,6 +1,7 @@
 (function() {
     const THEME_KEY = "theme";
-    const STATUS_INTERVAL = 5000;
+    const HOST_STATUS_INTERVAL = 5000;
+    const SERVICE_STATUS_INTERVAL = 3000;
     const THEME_COLORS = {
         light: "#ffffff",
         dark: "#020617"
@@ -131,7 +132,7 @@
         }
     });
 
-    async function updateStatus() {
+    async function updateHostStatus() {
         const dot = document.getElementById("statusDot");
         const pill = dot?.parentElement;
 
@@ -154,6 +155,48 @@
         }
     }
 
+    function setServiceDotState(dot, state) {
+        dot.classList.remove("status-online", "status-offline", "status-unknown");
+        dot.classList.add(`status-${state}`);
+    }
+
+    async function updateServiceStatuses() {
+        const statusDots = document.querySelectorAll(".service-status[data-service-id]");
+        if (!statusDots.length) return;
+
+        try {
+            const res = await fetch(`/api/service-status?t=${Date.now()}`, {
+                method: "GET",
+                cache: "no-store"
+            });
+            if (!res.ok) throw new Error("status endpoint failed");
+
+            const payload = await res.json();
+            const statuses = payload?.statuses || {};
+
+            statusDots.forEach((dot) => {
+                const serviceId = dot.getAttribute("data-service-id");
+                const isOnline = statuses[String(serviceId)];
+
+                if (isOnline === true) {
+                    setServiceDotState(dot, "online");
+                    dot.title = "Online";
+                } else if (isOnline === false) {
+                    setServiceDotState(dot, "offline");
+                    dot.title = "Offline";
+                } else {
+                    setServiceDotState(dot, "unknown");
+                    dot.title = "Unknown";
+                }
+            });
+        } catch {
+            statusDots.forEach((dot) => {
+                setServiceDotState(dot, "unknown");
+                dot.title = "Unknown";
+            });
+        }
+    }
+
     // init
     const yearEl = document.getElementById("year");
     if (yearEl) {
@@ -169,11 +212,16 @@
 
     applyTheme();
     registerServiceWorker();
-    updateStatus();
+    updateHostStatus();
+    updateServiceStatuses();
 
     setInterval(() => {
-        updateStatus();
-    }, STATUS_INTERVAL);
+        updateHostStatus();
+    }, HOST_STATUS_INTERVAL);
+
+    setInterval(() => {
+        updateServiceStatuses();
+    }, SERVICE_STATUS_INTERVAL);
 
 
 })();

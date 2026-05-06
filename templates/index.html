@@ -57,6 +57,9 @@
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
           </button>
+          <form method="post" action="/logout" class="logout-form">
+            <button class="logout-button" type="submit">Logout</button>
+          </form>
         </div>
       </header>
       {% if cfg.notes %}
@@ -76,6 +79,12 @@
                   <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>
                   <h3 class="service-name">{{ svc.name }}</h3>
                 </div>
+                <span
+                  class="service-status status-unknown"
+                  data-service-id="{{ loop.index0 }}"
+                  title="Checking..."
+                  aria-label="Service status indicator"
+                ></span>
               </div>
               {% if svc.description %}
               <p class="service-description">{{ svc.description }}</p>

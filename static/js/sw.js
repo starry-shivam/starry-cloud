@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "starry-cloud-v1";
+const CACHE_NAME = "starry-cloud-v2";
 const ASSETS = [
   "/",
   "/static/style.css",
@@ -31,12 +31,33 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
+  const url = new URL(req.url);
+
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(req));
+    return;
+  }
 
   if (req.mode === "navigate") {
     event.respondWith(
       fetch(req).catch(() => caches.match("/"))
     );
   } else {
+    const isLiveAsset = url.pathname === "/static/js/ui.js" || url.pathname === "/static/style.css";
+
+    if (isLiveAsset) {
+      event.respondWith(
+        fetch(req)
+          .then((res) => {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+            return res;
+          })
+          .catch(() => caches.match(req))
+      );
+      return;
+    }
+
     event.respondWith(
       caches.match(req).then((cached) => cached || fetch(req))
     );

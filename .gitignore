@@ -26,6 +26,7 @@ dist/
 # Byte-compiled / cache files
 .pytest_cache/
 .cache/
+.ruff_cache/
 
 # -------------------------------------------------------------------
 # Flask
@@ -35,6 +36,13 @@ instance/
 
 # If you store config overrides locally:
 config.local.yml
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+.flaskenv
+secrets.yml
 
 # -------------------------------------------------------------------
 # Docker
@@ -90,8 +98,4 @@ yarn-error.log
 *.swp
 *.swo
 
-# -------------------------------------------------------------------
-# Static site output
-# -----------------------------------------------------------
-site/
 
