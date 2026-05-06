@@ -1,7 +1,7 @@
 
-const CACHE_NAME = "starry-cloud-v2";
+const CACHE_NAME = "starry-cloud-v3";
 const ASSETS = [
-  "/",
+  "/login",
   "/static/style.css",
   "/static/js/ui.js",
   "/static/manifest.webmanifest",
@@ -39,9 +39,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req).catch(() => caches.match("/"))
-    );
+    event.respondWith(fetch(req));
   } else {
     const isLiveAsset = url.pathname === "/static/js/ui.js" || url.pathname === "/static/style.css";
 

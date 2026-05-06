@@ -1,7 +1,9 @@
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from functools import wraps
+from threading import Lock
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -11,6 +13,21 @@ from flask import Flask, jsonify, redirect, render_template, request, session, u
 from werkzeug.security import check_password_hash
 
 CONFIG_PATH = "config.yml"
+KNOWN_CRAWLER_SIGNATURES = (
+    "googlebot",
+    "bingbot",
+    "yandex",
+    "baiduspider",
+    "duckduckbot",
+    "facebookexternalhit",
+    "ia_archiver",
+    "slurp",
+    "crawler",
+    "spider",
+    "bot",
+    "curl",
+    "wget",
+)
 
 
 def load_config() -> dict:
@@ -61,15 +78,90 @@ def build_app() -> Flask:
 
     username = auth_cfg.get("username")
     password_hash = auth_cfg.get("password_hash")
+    bot_cfg = cfg.get("bot_protection", {})
+    login_max_attempts = max(1, int(bot_cfg.get("login_max_attempts", 5)))
+    login_window_seconds = max(10, int(bot_cfg.get("login_window_seconds", 300)))
+    login_lockout_seconds = max(30, int(bot_cfg.get("login_lockout_seconds", 900)))
+    block_known_crawlers = bool(bot_cfg.get("block_known_crawlers", True))
+    blocked_user_agents = [
+        str(item).lower().strip()
+        for item in bot_cfg.get("blocked_user_agents", [])
+        if str(item).strip()
+    ]
+
+    failed_login_attempts = {}
+    lockouts = {}
+    attempts_lock = Lock()
 
     if not username or not password_hash:
         raise RuntimeError(
             "Authentication requires auth.username and auth.password_hash in config.yml."
         )
 
+    def get_client_ip() -> str:
+        forwarded = request.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            return forwarded.split(",", 1)[0].strip() or "unknown"
+        return request.remote_addr or "unknown"
+
+    def is_disallowed_user_agent() -> bool:
+        if not block_known_crawlers:
+            return False
+
+        user_agent = request.headers.get("User-Agent", "").lower()
+        if not user_agent:
+            return True
+
+        if any(token in user_agent for token in blocked_user_agents):
+            return True
+
+        return any(token in user_agent for token in KNOWN_CRAWLER_SIGNATURES)
+
+    def lockout_remaining_seconds(client_ip: str) -> int:
+        now = time.time()
+        with attempts_lock:
+            until = lockouts.get(client_ip, 0)
+            if until <= now:
+                lockouts.pop(client_ip, None)
+                return 0
+            return int(until - now)
+
+    def register_failed_login(client_ip: str) -> None:
+        now = time.time()
+        threshold = now - login_window_seconds
+        with attempts_lock:
+            attempts = [
+                ts for ts in failed_login_attempts.get(client_ip, []) if ts >= threshold
+            ]
+            attempts.append(now)
+            failed_login_attempts[client_ip] = attempts
+            if len(attempts) >= login_max_attempts:
+                lockouts[client_ip] = now + login_lockout_seconds
+                failed_login_attempts.pop(client_ip, None)
+
+    def clear_failed_logins(client_ip: str) -> None:
+        with attempts_lock:
+            failed_login_attempts.pop(client_ip, None)
+            lockouts.pop(client_ip, None)
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault(
+            "X-Robots-Tag",
+            "noindex, nofollow, noarchive, nosnippet, noimageindex",
+        )
+        if not request.path.startswith("/static/"):
+            response.headers.setdefault(
+                "Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"
+            )
+            response.headers.setdefault("Pragma", "no-cache")
+        return response
+
     def login_required(view_func):
         @wraps(view_func)
         def wrapped(*args, **kwargs):
+            if is_disallowed_user_agent():
+                return ("Bot access denied", 403)
             if session.get("authenticated"):
                 return view_func(*args, **kwargs)
             return redirect(url_for("login", next=request.path))
@@ -104,17 +196,37 @@ def build_app() -> Flask:
         response.headers["Pragma"] = "no-cache"
         return response
 
+    @app.get("/robots.txt")
+    def robots_txt():
+        body = "User-agent: *\nDisallow: /\n"
+        return app.response_class(body, mimetype="text/plain")
+
     @app.route("/login", methods=["GET", "POST"])
     def login():
         error = None
+        if request.method == "GET" and is_disallowed_user_agent():
+            return ("Bot access denied", 403)
 
         if request.method == "POST":
+            client_ip = get_client_ip()
+            lockout_seconds = lockout_remaining_seconds(client_ip)
+            if lockout_seconds > 0:
+                wait_minutes = max(1, (lockout_seconds + 59) // 60)
+                error = f"Too many failed attempts. Try again in {wait_minutes} minute(s)."
+                return render_template("login.html", cfg=cfg, error=error), 429
+
+            if request.form.get("website", "").strip():
+                register_failed_login(client_ip)
+                error = "Invalid username or password"
+                return render_template("login.html", cfg=cfg, error=error), 401
+
             submitted_username = request.form.get("username", "")
             submitted_password = request.form.get("password", "")
 
             if submitted_username == username and check_password_hash(
                 password_hash, submitted_password
             ):
+                clear_failed_logins(client_ip)
                 session["authenticated"] = True
                 session.permanent = True
                 next_url = request.args.get("next", "/")
@@ -122,9 +234,11 @@ def build_app() -> Flask:
                     next_url if is_safe_next_url(next_url) else url_for("index")
                 )
 
+            register_failed_login(client_ip)
             error = "Invalid username or password"
 
-        return render_template("login.html", cfg=cfg, error=error)
+        status_code = 401 if error else 200
+        return render_template("login.html", cfg=cfg, error=error), status_code
 
     @app.post("/logout")
     def logout():

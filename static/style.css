@@ -571,6 +571,15 @@ body::after {
   gap: 0.55rem;
 }
 
+.auth-honeypot {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .auth-label {
   font-size: 0.76rem;
   color: var(--text-soft);

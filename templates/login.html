@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>{{ cfg.title }} - Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <script>
@@ -29,6 +30,7 @@
           <p class="auth-error" role="alert">{{ error }}</p>
           {% endif %}
           <form method="post" class="auth-form" autocomplete="on">
+            <input class="auth-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
             <label class="auth-label" for="username">Username</label>
             <input class="auth-input" id="username" name="username" type="text" required autofocus />
 
