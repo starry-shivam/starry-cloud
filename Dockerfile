@@ -8,8 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY config.yml .
 COPY templates ./templates
 COPY static ./static
-COPY app.py .
+COPY app/ ./app/
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:5000 --workers ${GUNICORN_WORKERS:-1} --threads ${GUNICORN_THREADS:-4} --worker-class gthread app:app"]

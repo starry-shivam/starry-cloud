@@ -4,15 +4,19 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from functools import wraps
 from threading import Lock
-from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
 
 import yaml
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
+from .status import _read_device_model, _read_system_hostname, get_system_stats, is_service_online
+
 CONFIG_PATH = "config.yml"
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.dirname(_HERE)
+
 KNOWN_CRAWLER_SIGNATURES = (
     "googlebot",
     "bingbot",
@@ -42,20 +46,15 @@ def is_safe_next_url(target: str) -> bool:
     return parsed.scheme == "" and parsed.netloc == "" and target.startswith("/")
 
 
-def is_service_online(url: str, timeout_seconds: float = 2.5) -> bool:
-    req = Request(url, method="HEAD")
-    try:
-        with urlopen(req, timeout=timeout_seconds) as response:
-            return response.status < 500
-    except HTTPError as err:
-        return err.code < 500
-    except (URLError, TimeoutError, ValueError):
-        return False
-
-
 def build_app() -> Flask:
     cfg = load_config()
-    app = Flask(__name__, static_folder="static", template_folder="templates")
+    flask_app = Flask(
+        __name__,
+        static_folder=os.path.join(_ROOT, "static"),
+        template_folder=os.path.join(_ROOT, "templates"),
+    )
+    system_hostname = _read_system_hostname()
+    device_model = _read_device_model()
 
     auth_cfg = cfg.get("auth", {})
     secret_key = auth_cfg.get("secret_key") or os.environ.get("SECRET_KEY")
@@ -68,13 +67,13 @@ def build_app() -> Flask:
     status_timeout_seconds = float(cfg.get("status_timeout_seconds", 2.5))
     status_workers = int(cfg.get("status_workers", 8))
 
-    app.config["SECRET_KEY"] = secret_key
-    app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.config["SESSION_COOKIE_SECURE"] = (
+    flask_app.config["SECRET_KEY"] = secret_key
+    flask_app.config["SESSION_COOKIE_HTTPONLY"] = True
+    flask_app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    flask_app.config["SESSION_COOKIE_SECURE"] = (
         str(auth_cfg.get("secure_cookie", False)).lower() == "true"
     )
-    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=max(session_days, 1))
+    flask_app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=max(session_days, 1))
 
     username = auth_cfg.get("username")
     password_hash = auth_cfg.get("password_hash")
@@ -144,7 +143,7 @@ def build_app() -> Flask:
             failed_login_attempts.pop(client_ip, None)
             lockouts.pop(client_ip, None)
 
-    @app.after_request
+    @flask_app.after_request
     def add_security_headers(response):
         response.headers.setdefault(
             "X-Robots-Tag",
@@ -168,12 +167,18 @@ def build_app() -> Flask:
 
         return wrapped
 
-    @app.route("/", methods=["GET", "HEAD"])
+    @flask_app.route("/", methods=["GET", "HEAD"])
     @login_required
     def index():
-        return render_template("index.html", cfg=cfg, services=cfg.get("services", []))
+        return render_template(
+            "index.html",
+            cfg=cfg,
+            services=cfg.get("services", []),
+            system_hostname=system_hostname,
+            device_model=device_model,
+        )
 
-    @app.get("/api/service-status")
+    @flask_app.get("/api/service-status")
     @login_required
     def service_status():
         services = cfg.get("services", [])
@@ -196,12 +201,22 @@ def build_app() -> Flask:
         response.headers["Pragma"] = "no-cache"
         return response
 
-    @app.get("/robots.txt")
+    @flask_app.get("/api/system-stats")
+    @login_required
+    def system_stats():
+        response = jsonify(get_system_stats())
+        response.headers["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, max-age=0"
+        )
+        response.headers["Pragma"] = "no-cache"
+        return response
+
+    @flask_app.get("/robots.txt")
     def robots_txt():
         body = "User-agent: *\nDisallow: /\n"
-        return app.response_class(body, mimetype="text/plain")
+        return flask_app.response_class(body, mimetype="text/plain")
 
-    @app.route("/login", methods=["GET", "POST"])
+    @flask_app.route("/login", methods=["GET", "POST"])
     def login():
         error = None
         if request.method == "GET" and is_disallowed_user_agent():
@@ -240,16 +255,12 @@ def build_app() -> Flask:
         status_code = 401 if error else 200
         return render_template("login.html", cfg=cfg, error=error), status_code
 
-    @app.post("/logout")
+    @flask_app.post("/logout")
     def logout():
         session.clear()
         return redirect(url_for("login"))
 
-    return app
+    return flask_app
 
 
 app = build_app()
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)

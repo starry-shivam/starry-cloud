@@ -4,49 +4,30 @@
     <meta charset="utf-8" />
     <title>{{ cfg.title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="{{ cfg.notes[:150] if cfg.notes else '' }}" />
+    <meta name="description" content="{{ cfg.subtitle or cfg.title }}" />
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="stylesheet" href="/static/style.css" />
     <link rel="manifest" href="/static/manifest.webmanifest" />
-    <link rel="icon" href="/static/berry.png" />
-    <link rel="apple-touch-icon" href="/static/berry.png" />
+    <link rel="icon" href="/static/dragon.png" />
+    <link rel="apple-touch-icon" href="/static/dragon.png" />
   </head>
   <body>
     <div id="loader" class="loader-overlay" aria-hidden="true">
       <div class="loader-spinner"></div>
     </div>
     <div class="page">
-      <header class="header">
-        <div class="header-main">
-          {% if cfg.logo_url %}
-          <img src="{{ cfg.logo_url }}" class="logo" alt="Logo" />
+      <header class="hero-header">
+        <div class="hero-actions">
+          {% if system_hostname %}
+          <span class="hostname-pill">
+            <span class="dot" id="statusDot"></span>
+            {{ system_hostname }}
+          </span>
           {% endif %}
-          <div class="title-wrap">
-            <h1 class="title">{{ cfg.title }}</h1>
-            {% if cfg.subtitle %}
-            <p class="subtitle">{{ cfg.subtitle }}</p>
-            {% endif %} {% if cfg.hostname %}
-            <span class="hostname-pill">
-              <span class="dot" id="statusDot"></span>
-              {{ cfg.hostname }}
-            </span>
-            {% endif %}
-          </div>
           <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-            <svg
-              id="themeIcon"
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <!-- SUN ICON (default) -->
+            <svg id="themeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5" />
               <line x1="12" y1="1" x2="12" y2="3" />
               <line x1="12" y1="21" x2="12" y2="23" />
@@ -62,11 +43,37 @@
             <button class="logout-button" type="submit">Logout</button>
           </form>
         </div>
+        <h1 class="hero-greeting" id="heroGreeting">Hello</h1>
+        <p class="hero-sub" id="heroSub">--</p>
       </header>
-      {% if cfg.notes %}
-      <section class="notes">{{ cfg.notes }}</section>
-      {% endif %}
       <main>
+        <section>
+          <div class="section-header">
+            <h2>System</h2>
+          </div>
+          <div class="metrics-grid" aria-live="polite">
+            <article class="metric-card" style="--card-index: 0">
+              <p class="metric-label">Uptime</p>
+              <p class="metric-value" id="uptimeValue">--</p>
+              <p class="metric-footer" id="uptimeFooter"></p>
+            </article>
+            <article class="metric-card" style="--card-index: 1">
+              <p class="metric-label">RAM Usage</p>
+              <p class="metric-value" id="ramValue">--</p>
+              <p class="metric-footer" id="ramFooter"></p>
+            </article>
+            <article class="metric-card" style="--card-index: 2">
+              <p class="metric-label">CPU Usage</p>
+              <p class="metric-value" id="cpuValue">--</p>
+              <p class="metric-footer" id="cpuFooter"></p>
+            </article>
+            <article class="metric-card" style="--card-index: 3">
+              <p class="metric-label">Disk Usage</p>
+              <p class="metric-value" id="diskValue">--</p>
+              <p class="metric-footer" id="diskFooter"></p>
+            </article>
+          </div>
+        </section>
         <section>
           <div class="section-header">
             <h2>Services</h2>
@@ -96,8 +103,8 @@
           </div>
         </section>
       </main>
-      <footer class="footer">© <span id="year"></span> Starry ⚝ | Powered by Dragon Q6A</footer>
+      <footer class="footer">© <span id="year"></span> Starry ⚝ | Powered by {{ device_model }}</footer>
     </div>
-    <script src="/static/js/ui.js"></script>
+    <script type="module" src="/static/js/ui.js"></script>
   </body>
 </html>

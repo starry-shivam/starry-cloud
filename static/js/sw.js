@@ -1,11 +1,14 @@
 
-const CACHE_NAME = "starry-cloud-v3";
+const CACHE_NAME = "starry-cloud-v4";
 const ASSETS = [
-  "/login",
   "/static/style.css",
   "/static/js/ui.js",
+  "/static/js/theme.js",
+  "/static/js/status.js",
+  "/static/js/stats.js",
+  "/static/js/clock.js",
   "/static/manifest.webmanifest",
-  "/static/berry.png"
+  "/static/dragon.png"
 ];
 
 
@@ -41,7 +44,14 @@ self.addEventListener("fetch", (event) => {
   if (req.mode === "navigate") {
     event.respondWith(fetch(req));
   } else {
-    const isLiveAsset = url.pathname === "/static/js/ui.js" || url.pathname === "/static/style.css";
+    const jsModules = [
+      "/static/js/ui.js",
+      "/static/js/theme.js",
+      "/static/js/status.js",
+      "/static/js/stats.js",
+      "/static/js/clock.js"
+    ];
+    const isLiveAsset = jsModules.includes(url.pathname) || url.pathname === "/static/style.css";
 
     if (isLiveAsset) {
       event.respondWith(
