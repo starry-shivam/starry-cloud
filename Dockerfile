@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY config.yml .
+COPY gen_auth.py .
 COPY templates ./templates
 COPY static ./static
 COPY app/ ./app/

@@ -35,7 +35,8 @@ instance/
 *.pid
 
 # If you store config overrides locally:
-config.local.yml
+config.yml
+auth.yml
 
 # Local environment and secret files
 .env

@@ -1,0 +1,31 @@
+title: "Starry Cloud ✨"
+subtitle: "A cozy home for my self-hosted apps"
+
+bot_protection:
+  # Block common crawler user-agent signatures on login and protected routes.
+  block_known_crawlers: true
+
+  # Additional user-agent substrings to block.
+  blocked_user_agents: []
+
+  # Login throttling controls.
+  login_max_attempts: 5
+  login_window_seconds: 300
+  login_lockout_seconds: 900
+
+# Available services to show on the dashboard. Order matters.
+services:
+  - name: "Service One"
+    url: "https://service-one.example.com"
+    emoji: "🌐"
+    description: "Replace with your first service"
+
+  - name: "Service Two"
+    url: "https://service-two.example.com"
+    emoji: "🧩"
+    description: "Replace with your second service"
+
+  - name: "Local Service"
+    url: "http://192.168.1.100:8080"
+    emoji: "🏠"
+    description: "Example local/LAN service"

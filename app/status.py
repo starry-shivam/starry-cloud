@@ -1,5 +1,6 @@
 import os
 import time
+import re
 from threading import Lock
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -164,20 +165,27 @@ def _read_linux_cpu_info() -> tuple[int, float | None]:
 
     max_hz = None
     try:
-        # cpuinfo_max_freq is in kHz
-        with open(
-            _host_path(HOST_SYS, "devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"),
-            encoding="utf-8",
-        ) as f:
-            max_hz = int(f.read().strip()) * 1000
+        # cpuinfo_max_freq is in kHz; choose the highest across all cpuN cores.
+        cpu_root = _host_path(HOST_SYS, "devices/system/cpu")
+        for entry in os.listdir(cpu_root):
+            if not re.fullmatch(r"cpu\d+", entry):
+                continue
+
+            freq_path = os.path.join(cpu_root, entry, "cpufreq", "cpuinfo_max_freq")
+            try:
+                with open(freq_path, encoding="utf-8") as f:
+                    hz = int(f.read().strip()) * 1000
+                max_hz = hz if max_hz is None else max(max_hz, hz)
+            except (OSError, ValueError):
+                continue
     except (OSError, ValueError):
-        # Fall back to the reported MHz in /proc/cpuinfo
+        # Fall back to the highest reported MHz in /proc/cpuinfo.
         try:
             with open(_host_path(HOST_PROC, "cpuinfo"), encoding="utf-8") as f:
                 for line in f:
                     if line.lower().startswith("cpu mhz"):
-                        max_hz = float(line.split(":", 1)[1].strip()) * 1_000_000
-                        break
+                        hz = float(line.split(":", 1)[1].strip()) * 1_000_000
+                        max_hz = hz if max_hz is None else max(max_hz, hz)
         except (OSError, ValueError):
             pass
 

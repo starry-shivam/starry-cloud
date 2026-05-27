@@ -18,6 +18,7 @@ from .status import (
 )
 
 CONFIG_PATH = "config.yml"
+AUTH_CONFIG_PATH = "auth.yml"
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_HERE)
@@ -39,9 +40,27 @@ KNOWN_CRAWLER_SIGNATURES = (
 )
 
 
+def _load_yaml_file(path: str) -> dict:
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+            return data if isinstance(data, dict) else {}
+    except FileNotFoundError:
+        return {}
+
+
 def load_config() -> dict:
-    with open(CONFIG_PATH, encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+    cfg = _load_yaml_file(CONFIG_PATH)
+    auth_file_cfg = _load_yaml_file(AUTH_CONFIG_PATH)
+
+    auth_cfg = auth_file_cfg.get("auth", auth_file_cfg)
+    if not isinstance(auth_cfg, dict):
+        auth_cfg = {}
+
+    # Keep app auth configuration in auth.yml only.
+    cfg.pop("auth", None)
+    cfg["auth"] = auth_cfg
+    return cfg
 
 
 def is_safe_next_url(target: str) -> bool:
@@ -65,7 +84,7 @@ def build_app() -> Flask:
     secret_key = auth_cfg.get("secret_key") or os.environ.get("SECRET_KEY")
     if not secret_key:
         raise RuntimeError(
-            "Authentication requires auth.secret_key in config.yml or SECRET_KEY environment variable."
+            "Authentication requires auth.secret_key in auth.yml or SECRET_KEY environment variable."
         )
 
     session_days = int(auth_cfg.get("session_days", 30))
@@ -101,7 +120,7 @@ def build_app() -> Flask:
 
     if not username or not password_hash:
         raise RuntimeError(
-            "Authentication requires auth.username and auth.password_hash in config.yml."
+            "Authentication requires auth.username and auth.password_hash in auth.yml."
         )
 
     def get_client_ip() -> str:
