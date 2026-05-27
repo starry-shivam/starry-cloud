@@ -9,6 +9,4 @@ services:
       - GUNICORN_WORKERS=1
       - GUNICORN_THREADS=2
     volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
       - /:/host/root:ro

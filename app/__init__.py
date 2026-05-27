@@ -10,7 +10,12 @@ import yaml
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
-from .status import _read_device_model, _read_system_hostname, get_system_stats, is_service_online
+from .status import (
+    _read_device_model,
+    _read_system_hostname,
+    get_system_stats,
+    is_service_online,
+)
 
 CONFIG_PATH = "config.yml"
 
@@ -73,7 +78,9 @@ def build_app() -> Flask:
     flask_app.config["SESSION_COOKIE_SECURE"] = (
         str(auth_cfg.get("secure_cookie", False)).lower() == "true"
     )
-    flask_app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=max(session_days, 1))
+    flask_app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(
+        days=max(session_days, 1)
+    )
 
     username = auth_cfg.get("username")
     password_hash = auth_cfg.get("password_hash")
@@ -227,7 +234,9 @@ def build_app() -> Flask:
             lockout_seconds = lockout_remaining_seconds(client_ip)
             if lockout_seconds > 0:
                 wait_minutes = max(1, (lockout_seconds + 59) // 60)
-                error = f"Too many failed attempts. Try again in {wait_minutes} minute(s)."
+                error = (
+                    f"Too many failed attempts. Try again in {wait_minutes} minute(s)."
+                )
                 return render_template("login.html", cfg=cfg, error=error), 429
 
             if request.form.get("website", "").strip():

@@ -1,6 +1,5 @@
 import os
 import time
-from socket import gethostname
 from threading import Lock
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -50,17 +49,21 @@ def _read_linux_uptime_seconds() -> float | None:
 
 
 def _read_system_hostname() -> str:
+    # Try reading /etc/hostname from host first
     try:
-        with open(_host_path(HOST_PROC, "sys/kernel/hostname"), encoding="utf-8") as f:
+        with open(_host_path(HOST_ROOT, "etc/hostname"), encoding="utf-8") as f:
             name = f.read().strip()
         if name:
             return name
     except OSError:
         pass
 
+    # Fallback to /proc/sys/kernel/hostname
     try:
-        name = gethostname().strip()
-        return name or "unknown-host"
+        with open(_host_path(HOST_PROC, "sys/kernel/hostname"), encoding="utf-8") as f:
+            name = f.read().strip()
+        if name:
+            return name
     except OSError:
         return "unknown-host"
 
@@ -77,7 +80,11 @@ def _read_device_model() -> str:
         try:
             with open(path, encoding="utf-8") as f:
                 value = f.read().strip()
-            if value and value not in {"To Be Filled By O.E.M.", "None", "Default string"}:
+            if value and value not in {
+                "To Be Filled By O.E.M.",
+                "None",
+                "Default string",
+            }:
                 values.append(value)
         except OSError:
             continue
