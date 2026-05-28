@@ -24,14 +24,14 @@ updateHeroGreeting();
 updateHeroSubtitle();
 setInterval(() => { updateHeroGreeting(); updateHeroSubtitle(); }, 1000);
 
+initTheme();
+applyTheme();
+
 const loader = document.getElementById("loader");
 if (loader) {
     loader.classList.add("loader-hidden");
     setTimeout(() => loader.remove(), 380);
 }
-
-initTheme();
-applyTheme();
 registerServiceWorker();
 updateHostStatus();
 updateServiceStatuses();

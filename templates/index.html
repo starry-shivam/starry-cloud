@@ -8,6 +8,27 @@
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
     <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("theme") || "auto";
+          var systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var theme = saved === "auto" ? (systemDark ? "dark" : "light") : saved;
+          document.documentElement.setAttribute("data-theme", theme);
+
+          var themeColor = theme === "dark" ? "#020617" : "#ffffff";
+          var themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (themeMeta) themeMeta.setAttribute("content", themeColor);
+
+          var appleMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+          if (appleMeta) {
+            appleMeta.setAttribute("content", theme === "dark" ? "black-translucent" : "default");
+          }
+        } catch (_) {
+          // Ignore storage/query errors and keep default light fallback.
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="/static/style.css" />
     <link rel="manifest" href="/static/manifest.webmanifest" />
     <link rel="icon" href="/static/dragon.png" />
