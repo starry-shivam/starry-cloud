@@ -1,5 +1,9 @@
 title: "Starry Cloud ✨"
 subtitle: "A cozy home for my self-hosted apps"
+# Timeout in seconds for each service status probe.
+status_timeout_seconds: 4
+# Max number of concurrent workers for service status checks.
+status_workers: 8
 
 bot_protection:
   # Block common crawler user-agent signatures on login and protected routes.

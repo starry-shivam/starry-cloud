@@ -1,0 +1,8 @@
+auth:
+  username: "replace-me"
+  # Generate with gen_auth.py or werkzeug.security.generate_password_hash(...)
+  password_hash: "replace-me"
+  # Set a long random value here or provide SECRET_KEY in the environment.
+  secret_key: "replace-me"
+  session_days: 30
+  secure_cookie: true
