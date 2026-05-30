@@ -25,7 +25,7 @@ def build_app() -> Flask:
     )
     system_hostname = _read_system_hostname()
     device_model = _read_device_model()
-    status_timeout_seconds = float(cfg.get("status_timeout_seconds", 4))
+    status_timeout_seconds = float(cfg.get("status_timeout_seconds", 2.5))
     status_workers = int(cfg.get("status_workers", 8))
 
     auth_manager = init_auth(flask_app, cfg)
