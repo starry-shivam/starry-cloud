@@ -24,6 +24,11 @@ HOST_ROOT = _select_stats_path("HOST_ROOT", "/host/root", "/", "/host/root/proc"
 _cpu_sample_lock = Lock()
 _last_cpu_totals = None
 
+# Read hardware constants once and cache
+# since they won't change at runtime.
+_cpu_cores: int | None = None
+_cpu_max_hz: float | None = None
+
 
 def _host_path(root: str, path: str) -> str:
     return os.path.join(root, path.lstrip("/"))
@@ -217,7 +222,10 @@ def get_system_stats() -> dict:
         mem_total_bytes, mem_used_bytes, memory_percent = memory_stats
 
     cpu_percent = _read_linux_cpu_percent()
-    cpu_cores, cpu_max_hz = _read_linux_cpu_info()
+    global _cpu_cores, _cpu_max_hz
+    if _cpu_cores is None:
+        _cpu_cores, _cpu_max_hz = _read_linux_cpu_info()
+    cpu_cores, cpu_max_hz = _cpu_cores, _cpu_max_hz
 
     disk_total_bytes = None
     disk_used_bytes = None
