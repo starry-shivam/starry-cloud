@@ -1,8 +1,10 @@
 # Starry Cloud
 
-<img width="1264" height="674" alt="IMG_20260528_100545_970" src="https://github.com/user-attachments/assets/df0b8122-95d5-4ece-9f80-d883f463b544" />
-
 A self-hosted dashboard for personal services with live status checks, system resource monitoring, and password-protected access. Useful organizing and monitoring your self-hosted apps in one cozy place.
+
+<img width="1200" alt="Screenshot From 2026-05-30 11-27-43" src="https://github.com/user-attachments/assets/6ff1872a-44c2-4993-9d34-f42689d1a4fc" />
+
+---
 
 ### Quick Start
 
