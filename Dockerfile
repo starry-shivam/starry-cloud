@@ -12,4 +12,14 @@ COPY app/ ./app/
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:5000 --workers ${GUNICORN_WORKERS:-1} --threads ${GUNICORN_THREADS:-4} --worker-class gthread app:app"]
+CMD gunicorn \
+	--bind 0.0.0.0:5000 \
+	--workers ${GUNICORN_WORKERS:-1} \
+	--threads ${GUNICORN_THREADS:-4} \
+	--worker-class gthread \
+	--access-logfile - \
+	--access-logformat 'ip=%(h)s xff=%({x-forwarded-for}i)s method=%(m)s path=%(U)s status=%(s)s rt=%(L)s' \
+	--error-logfile - \
+	--log-level info \
+	--capture-output \
+	app:app
