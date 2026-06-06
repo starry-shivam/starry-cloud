@@ -1,3 +1,4 @@
+import glob
 import os
 import time
 import re
@@ -18,8 +19,34 @@ def _select_stats_path(
 
 
 HOST_PROC = _select_stats_path("HOST_PROC", "/host/proc", "/proc", "/host/proc/uptime")
-HOST_SYS = _select_stats_path("HOST_SYS", "/host/sys", "/sys", "/host/sys/devices")
+HOST_SYS = _select_stats_path("HOST_SYS", "/host/sys", "/sys", "/host/sys/class")
 HOST_ROOT = _select_stats_path("HOST_ROOT", "/host/root", "/", "/host/root/proc")
+HOST_ETC = _select_stats_path("HOST_ETC", "/host/etc", "/etc", "/host/etc/hostname")
+
+CPU_THERMAL_PREFIXES = (
+    "cpu",
+    "cpuss",
+)
+
+CPU_HWMON_NAMES = {
+    "coretemp",       # Intel
+    "k10temp",        # AMD
+    "zenpower",       # AMD
+    "cpu_thermal",
+    "x86_pkg_temp",
+    "fam15h_power",
+    "fam17h_power",
+    "fam19h_power",
+}
+
+CPU_LABEL_KEYWORDS = (
+    "cpu",
+    "package",
+    "tdie",
+    "tctl",
+    "core",
+    "physical id",
+)
 
 _cpu_sample_lock = Lock()
 _last_cpu_totals = None
@@ -55,7 +82,16 @@ def _read_linux_uptime_seconds() -> float | None:
 
 
 def _read_system_hostname() -> str:
-    # Try reading /etc/hostname from host first
+    # Try the dedicated host mount first (hardened compose uses /host/etc/hostname).
+    try:
+        with open(_host_path(HOST_ETC, "hostname"), encoding="utf-8") as f:
+            name = f.read().strip()
+        if name:
+            return name
+    except OSError:
+        pass
+
+    # Fallback: try /etc/hostname path selected via HOST_ROOT.
     try:
         with open(_host_path(HOST_ROOT, "etc/hostname"), encoding="utf-8") as f:
             name = f.read().strip()
@@ -209,6 +245,177 @@ def _read_linux_disk_usage() -> tuple[int, int, float] | None:
         return None
 
 
+def _read_temp_file(path: str) -> float | None:
+    """Read a temperature file and return Celsius value."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            value = int(f.read().strip())
+
+        temp = value / 1000.0
+
+        if 0 <= temp < 200:
+            return round(temp, 1)
+
+    except (OSError, ValueError):
+        pass
+
+    return None
+
+
+def _read_linux_cpu_temperature() -> float | None:
+    """Read CPU temperature with multi-pass strategy for reliability.
+    
+    PASS 1: Thermal zones - prioritizes CPU-related zones
+    PASS 2: hwmon devices - checks device names and sensor labels
+    PASS 3: Fallback to any remaining thermal data
+    
+    Returns the maximum temperature found in CPU-specific sources.
+    """
+    thermal_candidates = []
+    fallback_candidates = []
+
+    #
+    # PASS 1: thermal zones
+    #
+    thermal_root = _host_path(HOST_SYS, "class/thermal")
+
+    try:
+        if os.path.isdir(thermal_root):
+
+            for zone in os.listdir(thermal_root):
+
+                if not zone.startswith("thermal_zone"):
+                    continue
+
+                zone_dir = os.path.join(thermal_root, zone)
+
+                type_file = os.path.join(zone_dir, "type")
+                temp_file = os.path.join(zone_dir, "temp")
+
+                temp = _read_temp_file(temp_file)
+
+                if temp is None:
+                    continue
+
+                sensor_type = ""
+
+                try:
+                    with open(type_file, encoding="utf-8") as f:
+                        sensor_type = f.read().strip().lower()
+                except OSError:
+                    pass
+
+                if sensor_type.startswith(CPU_THERMAL_PREFIXES):
+                    thermal_candidates.append(temp)
+
+                elif any(
+                    k in sensor_type
+                    for k in (
+                        "cpu",
+                        "tcpu",
+                        "package",
+                        "x86_pkg",
+                        "soc",
+                    )
+                ):
+                    thermal_candidates.append(temp)
+
+                else:
+                    fallback_candidates.append(temp)
+
+    except OSError:
+        pass
+
+    if thermal_candidates:
+        return max(thermal_candidates)
+
+    #
+    # PASS 2: hwmon
+    #
+    hwmon_root = _host_path(HOST_SYS, "class/hwmon")
+
+    try:
+        if os.path.isdir(hwmon_root):
+
+            preferred = []
+            generic = []
+
+            for hwmon in os.listdir(hwmon_root):
+
+                hwmon_dir = os.path.join(hwmon_root, hwmon)
+
+                if not os.path.isdir(hwmon_dir):
+                    continue
+
+                hwmon_name = ""
+
+                try:
+                    with open(
+                        os.path.join(hwmon_dir, "name"),
+                        encoding="utf-8",
+                    ) as f:
+                        hwmon_name = f.read().strip().lower()
+                except OSError:
+                    pass
+
+                for input_file in glob.glob(
+                    os.path.join(hwmon_dir, "temp*_input")
+                ):
+                    temp = _read_temp_file(input_file)
+
+                    if temp is None:
+                        continue
+
+                    label = ""
+
+                    label_file = input_file.replace(
+                        "_input",
+                        "_label",
+                    )
+
+                    try:
+                        with open(
+                            label_file,
+                            encoding="utf-8",
+                        ) as f:
+                            label = f.read().strip().lower()
+                    except OSError:
+                        pass
+
+                    is_cpu = False
+
+                    if hwmon_name in CPU_HWMON_NAMES:
+                        is_cpu = True
+
+                    elif any(
+                        word in label
+                        for word in CPU_LABEL_KEYWORDS
+                    ):
+                        is_cpu = True
+
+                    if is_cpu:
+                        preferred.append(temp)
+                    else:
+                        generic.append(temp)
+
+            if preferred:
+                return max(preferred)
+
+            if generic:
+                return max(generic)
+
+    except OSError:
+        pass
+
+    #
+    # PASS 3: final fallback
+    #
+    if fallback_candidates:
+        return max(fallback_candidates)
+
+    return None
+
+
 def get_system_stats() -> dict:
     uptime_seconds = _read_linux_uptime_seconds()
     if uptime_seconds is None:
@@ -222,6 +429,7 @@ def get_system_stats() -> dict:
         mem_total_bytes, mem_used_bytes, memory_percent = memory_stats
 
     cpu_percent = _read_linux_cpu_percent()
+    cpu_temperature = _read_linux_cpu_temperature()
     global _cpu_cores, _cpu_max_hz
     if _cpu_cores is None:
         _cpu_cores, _cpu_max_hz = _read_linux_cpu_info()
@@ -245,6 +453,7 @@ def get_system_stats() -> dict:
             "percent": None if cpu_percent is None else round(cpu_percent, 1),
             "cores": cpu_cores,
             "max_hz": cpu_max_hz,
+            "temperature_celsius": cpu_temperature,
         },
         "disk": {
             "total_bytes": disk_total_bytes,

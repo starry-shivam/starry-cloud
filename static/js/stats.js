@@ -61,12 +61,14 @@ export async function updateSystemStats() {
         const cpuPercent = payload?.cpu?.percent;
         const cores = payload?.cpu?.cores;
         const maxHz = payload?.cpu?.max_hz;
+        const tempCelsius = payload?.cpu?.temperature_celsius;
         cpuEl.textContent =
             typeof cpuPercent === "number" ? `${cpuPercent.toFixed(1)}%` : "Warming up...";
         if (cpuFooterEl) {
             const details = [];
             if (cores) details.push(`${cores} cores`);
             if (typeof maxHz === "number") details.push(`${(maxHz / 1e9).toFixed(2)} GHz`);
+            if (typeof tempCelsius === "number") details.push(`${tempCelsius}°C`);
             cpuFooterEl.textContent = details.join(" \u00b7 ");
         }
 

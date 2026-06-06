@@ -3,16 +3,80 @@ services:
     container_name: starry-cloud
     build: .
     restart: unless-stopped
+    init: true
     ports:
       - "5000:5000"
+    user: "1000:1000"
+    pids_limit: 128
+    mem_limit: 128m
+    memswap_limit: 128m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/login', timeout=2)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - GUNICORN_WORKERS=1
       - GUNICORN_THREADS=2
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
     volumes:
       # App settings file (create from config.example.yml):
-      - ./config.yml:/app/config.yml:ro
+      - type: bind
+        source: ./config.yml
+        target: /app/config.yml
+        read_only: true
       # Auth secrets file — generate with:
       # docker compose run --rm starry-cloud python3 gen_auth.py
-      - ./auth.yml:/app/auth.yml:ro
-      # Mount root fs (read-only) for live system info (e.g. CPU, RAM, disk usage):
-      - /:/host/root:ro
+      - type: bind
+        source: ./auth.yml
+        target: /app/auth.yml
+        read_only: true
+      # procfs: mount only files required for showing system stats
+      - type: bind
+        source: /proc/uptime
+        target: /host/proc/uptime
+        read_only: true
+      - type: bind
+        source: /proc/meminfo
+        target: /host/proc/meminfo
+        read_only: true
+      - type: bind
+        source: /proc/stat
+        target: /host/proc/stat
+        read_only: true
+      - type: bind
+        source: /proc/cpuinfo
+        target: /host/proc/cpuinfo
+        read_only: true
+      - type: bind
+        source: /proc/sys/kernel/hostname
+        target: /host/proc/sys/kernel/hostname
+        read_only: true
+      # sysfs: mount only files required for showing system stats
+      - type: bind
+        source: /sys/class
+        target: /host/sys/class
+        read_only: true
+      - type: bind
+        source: /sys/devices
+        target: /host/sys/devices
+        read_only: true
+      # hostname only
+      - type: bind
+        source: /etc/hostname
+        target: /host/etc/hostname
+        read_only: true
