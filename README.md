@@ -1,6 +1,6 @@
 # Starry Cloud
 
-A self-hosted dashboard for personal services with live status checks, system resource monitoring, and password-protected access. Useful organizing and monitoring your self-hosted apps in one cozy place.
+A self-hosted dashboard for my personal services with live status checks, system resource monitoring, and password-protected access. Useful organizing and monitoring self-hosted apps in one cozy place.
 
 <img width="1200" alt="Screenshot From 2026-05-30 11-27-43" src="https://github.com/user-attachments/assets/6ff1872a-44c2-4993-9d34-f42689d1a4fc" />
 
@@ -32,13 +32,6 @@ The app uses two config files:
 
 - `config.yml` for dashboard content and app behavior.
 - `auth.yml` for authentication settings.
-
-Use the examples as a starting point:
-
-```bash
-cp config.example.yml config.yml
-cp auth.example.yml auth.yml
-```
 
 Notes:
 
