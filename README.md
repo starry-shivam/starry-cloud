@@ -8,12 +8,19 @@ A self-hosted dashboard for personal services with live status checks, system re
 
 ### Quick Start
 
-Start the app with Docker Compose:
+Deploy the app with Docker Compose in under a minute:
 
 ```bash
+# Create dashboard config file:
 cp config.example.yml config.yml
-cp auth.example.yml auth.yml
+
+# Create auth file:
+touch auth.yml
+
+# Generate auth file contents and paste in auth.yml
 docker compose run --rm starry-cloud python3 gen_auth.py
+
+# Start the app (omit --build in subsequent runs)
 docker compose up -d --build
 ```
 
