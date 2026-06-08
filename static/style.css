@@ -630,8 +630,8 @@ body::after {
 
 .auth-input {
   width: 100%;
-  border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.75);
   color: var(--text);
   border-radius: 12px;
   padding: 0.62rem 0.72rem;
@@ -640,6 +640,7 @@ body::after {
 
 :root[data-theme="dark"] .auth-input {
   background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .auth-input:focus {
@@ -650,9 +651,9 @@ body::after {
 
 .auth-submit {
   margin-top: 0.5rem;
-  border: 1px solid var(--glass-border);
+  border: none;
   border-radius: 12px;
-  background: var(--accent);
+  background: #0e0e1a;
   color: #fff;
   font: inherit;
   font-weight: 600;
@@ -664,7 +665,18 @@ body::after {
 }
 
 .auth-submit:hover {
-  filter: brightness(1.03);
+  filter: brightness(1.15);
+}
+
+:root[data-theme="dark"] .auth-submit {
+  background: rgba(255, 255, 255, 0.82);
+  color: #0e0e1a;
+  border: none;
+}
+
+:root[data-theme="dark"] .auth-submit:hover {
+  background: rgba(255, 255, 255, 0.92);
+  filter: none;
 }
 
 .auth-submit:active {

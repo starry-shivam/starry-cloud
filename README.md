@@ -2,7 +2,7 @@
 
 A self-hosted dashboard for my personal services with live status checks, system resource monitoring, and password-protected access. Useful organizing and monitoring self-hosted apps in one cozy place.
 
-<img width="1200" alt="Screenshot From 2026-05-30 11-27-43" src="https://github.com/user-attachments/assets/6ff1872a-44c2-4993-9d34-f42689d1a4fc" />
+<img width="1264" height="670" alt="image" src="https://github.com/user-attachments/assets/c261a912-5fba-4b5f-a222-f80ab4cbd6b5" />
 
 ---
 
