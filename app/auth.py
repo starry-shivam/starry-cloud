@@ -7,6 +7,8 @@ from urllib.parse import urlparse
 from flask import (
     Blueprint,
     current_app,
+    flash,
+    get_flashed_messages,
     redirect,
     render_template,
     request,
@@ -108,7 +110,7 @@ class AuthManager:
             if until <= now:
                 self.lockouts.pop(client_ip, None)
                 return 0
-            return int(until - now)
+            return max(1, int(until - now))
 
     def register_failed_login(self, client_ip: str) -> None:
         now = time.time()
@@ -158,46 +160,62 @@ def login_required(view_func):
     return wrapped
 
 
+def _flash_error_or_lockout(manager: "AuthManager", client_ip: str) -> None:
+    lockout_seconds = manager.lockout_remaining_seconds(client_ip)
+    if lockout_seconds > 0:
+        wait_minutes = max(1, (lockout_seconds + 59) // 60)
+        flash(f"Too many failed attempts. Try again in {wait_minutes} minute(s).")
+    else:
+        flash("Invalid username or password")
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     manager = get_auth_manager()
     cfg = current_app.config[APP_CONFIG_KEY]
-    error = None
-    if request.method == "GET" and manager.is_disallowed_user_agent():
-        return ("Bot access denied", 403)
 
-    if request.method == "POST":
-        client_ip = manager.get_client_ip()
-        lockout_seconds = manager.lockout_remaining_seconds(client_ip)
-        if lockout_seconds > 0:
-            wait_minutes = max(1, (lockout_seconds + 59) // 60)
-            error = f"Too many failed attempts. Try again in {wait_minutes} minute(s)."
-            return render_template("login.html", cfg=cfg, error=error), 429
+    if request.method == "GET":
+        if manager.is_disallowed_user_agent():
+            return ("Bot access denied", 403)
+        messages = get_flashed_messages()
+        error = messages[0] if messages else None
+        return render_template("login.html", cfg=cfg, error=error)
 
-        if request.form.get("website", "").strip():
-            manager.register_failed_login(client_ip)
-            error = "Invalid username or password"
-            return render_template("login.html", cfg=cfg, error=error), 401
+    # POST always redirect after processing (PRG pattern) so a browser
+    # refresh or server-restart replay cannot resubmit credentials.
+    client_ip = manager.get_client_ip()
+    next_url = request.args.get("next", "")
+    login_url = (
+        url_for("auth.login", next=next_url) if next_url else url_for("auth.login")
+    )
 
-        submitted_username = request.form.get("username", "")
-        submitted_password = request.form.get("password", "")
+    lockout_seconds = manager.lockout_remaining_seconds(client_ip)
+    if lockout_seconds > 0:
+        wait_minutes = max(1, (lockout_seconds + 59) // 60)
+        flash(f"Too many failed attempts. Try again in {wait_minutes} minute(s).")
+        return redirect(login_url)
 
-        if submitted_username == manager.username and check_password_hash(
-            manager.password_hash, submitted_password
-        ):
-            manager.clear_failed_logins(client_ip)
-            session["authenticated"] = True
-            session.permanent = True
-            next_url = request.args.get("next", "/")
-            return redirect(
-                next_url if is_safe_next_url(next_url) else url_for("pages.index")
-            )
-
+    if request.form.get("website", "").strip():
         manager.register_failed_login(client_ip)
-        error = "Invalid username or password"
+        _flash_error_or_lockout(manager, client_ip)
+        return redirect(login_url)
 
-    status_code = 401 if error else 200
-    return render_template("login.html", cfg=cfg, error=error), status_code
+    submitted_username = request.form.get("username", "")
+    submitted_password = request.form.get("password", "")
+
+    if submitted_username == manager.username and check_password_hash(
+        manager.password_hash, submitted_password
+    ):
+        manager.clear_failed_logins(client_ip)
+        session["authenticated"] = True
+        session.permanent = True
+        return redirect(
+            next_url if is_safe_next_url(next_url) else url_for("pages.index")
+        )
+
+    manager.register_failed_login(client_ip)
+    _flash_error_or_lockout(manager, client_ip)
+    return redirect(login_url)
 
 
 @auth_bp.post("/logout")
