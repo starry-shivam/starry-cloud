@@ -29,9 +29,9 @@ CPU_THERMAL_PREFIXES = (
 )
 
 CPU_HWMON_NAMES = {
-    "coretemp",       # Intel
-    "k10temp",        # AMD
-    "zenpower",       # AMD
+    "coretemp",  # Intel
+    "k10temp",  # AMD
+    "zenpower",  # AMD
     "cpu_thermal",
     "x86_pkg_temp",
     "fam15h_power",
@@ -264,11 +264,11 @@ def _read_temp_file(path: str) -> float | None:
 
 def _read_linux_cpu_temperature() -> float | None:
     """Read CPU temperature with multi-pass strategy for reliability.
-    
+
     PASS 1: Thermal zones - prioritizes CPU-related zones
     PASS 2: hwmon devices - checks device names and sensor labels
     PASS 3: Fallback to any remaining thermal data
-    
+
     Returns the maximum temperature found in CPU-specific sources.
     """
     thermal_candidates = []
@@ -358,9 +358,7 @@ def _read_linux_cpu_temperature() -> float | None:
                 except OSError:
                     pass
 
-                for input_file in glob.glob(
-                    os.path.join(hwmon_dir, "temp*_input")
-                ):
+                for input_file in glob.glob(os.path.join(hwmon_dir, "temp*_input")):
                     temp = _read_temp_file(input_file)
 
                     if temp is None:
@@ -387,10 +385,7 @@ def _read_linux_cpu_temperature() -> float | None:
                     if hwmon_name in CPU_HWMON_NAMES:
                         is_cpu = True
 
-                    elif any(
-                        word in label
-                        for word in CPU_LABEL_KEYWORDS
-                    ):
+                    elif any(word in label for word in CPU_LABEL_KEYWORDS):
                         is_cpu = True
 
                     if is_cpu:

@@ -17,11 +17,14 @@ cp config.example.yml config.yml
 # Create auth file:
 touch auth.yml
 
+# build the docker image
+docker compose build
+
 # Generate auth file contents and paste in auth.yml
 docker compose run --rm starry-cloud python3 gen_auth.py
 
-# Start the app (omit --build in subsequent runs)
-docker compose up -d --build
+# Start the app
+docker compose up -d
 ```
 
 The app will be available at `http://localhost:5000`.

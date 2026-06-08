@@ -13,7 +13,7 @@ bot_protection:
   blocked_user_agents: []
 
   # Login throttling controls.
-  login_max_attempts: 5
+  login_max_attempts: 3
   login_window_seconds: 300
   login_lockout_seconds: 900
 

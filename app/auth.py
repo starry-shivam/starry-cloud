@@ -4,7 +4,15 @@ from functools import wraps
 from threading import Lock
 from urllib.parse import urlparse
 
-from flask import Blueprint, current_app, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from werkzeug.security import check_password_hash
 
 KNOWN_CRAWLER_SIGNATURES = (
@@ -49,9 +57,7 @@ class AuthManager:
 
         self.secret_key = secret_key
         self.session_days = int(auth_cfg.get("session_days", 30))
-        self.secure_cookie = (
-            str(auth_cfg.get("secure_cookie", False)).lower() == "true"
-        )
+        self.secure_cookie = str(auth_cfg.get("secure_cookie", False)).lower() == "true"
         self.username = auth_cfg.get("username")
         self.password_hash = auth_cfg.get("password_hash")
         self.login_max_attempts = max(1, int(bot_cfg.get("login_max_attempts", 5)))

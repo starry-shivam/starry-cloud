@@ -220,7 +220,7 @@ body::after {
 }
 
 .subtitle {
-  margin: 0;
+  margin: 0.35rem 0 0;
   font-size: 0.82rem;
   color: var(--text-soft);
 }
