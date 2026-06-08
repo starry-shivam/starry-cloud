@@ -56,6 +56,12 @@ def build_app() -> Flask:
         )
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "no-referrer")
+        # Keep CSP strict for framing/object embedding while avoiding inline-script breakage.
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+        )
+        response.headers.setdefault("X-Frame-Options", "DENY")
         if not request.path.startswith("/static/"):
             response.headers.setdefault(
                 "Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"

@@ -82,7 +82,7 @@ def main() -> int:
     args = parse_args()
 
     try:
-        username = prompt_string("Username", "starry")
+        username = prompt_string("Username", "admin")
         if not username:
             raise ValueError("Username cannot be empty.")
 
