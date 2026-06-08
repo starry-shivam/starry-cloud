@@ -69,6 +69,9 @@ class AuthManager:
         self.login_lockout_seconds = max(
             30, int(bot_cfg.get("login_lockout_seconds", 900))
         )
+        self.state_cleanup_interval_seconds = max(
+            30, int(bot_cfg.get("state_cleanup_interval_seconds", 300))
+        )
         self.block_known_crawlers = bool(bot_cfg.get("block_known_crawlers", True))
         self.blocked_user_agents = [
             str(item).lower().strip()
@@ -78,6 +81,7 @@ class AuthManager:
         self.failed_login_attempts = {}
         self.lockouts = {}
         self.attempts_lock = Lock()
+        self._last_state_cleanup = 0.0
 
         if not self.username or not self.password_hash:
             raise RuntimeError(
@@ -85,9 +89,8 @@ class AuthManager:
             )
 
     def get_client_ip(self) -> str:
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",", 1)[0].strip() or "unknown"
+        # Use remote_addr only. If the app is behind trusted proxies,
+        # ProxyFix rewrites remote_addr safely based on configured hop count.
         return request.remote_addr or "unknown"
 
     def is_disallowed_user_agent(self) -> bool:
@@ -103,9 +106,23 @@ class AuthManager:
 
         return any(token in user_agent for token in KNOWN_CRAWLER_SIGNATURES)
 
+    def _cleanup_state_if_due(self, now: float) -> None:
+        if now - self._last_state_cleanup < self.state_cleanup_interval_seconds:
+            return
+
+        attempt_threshold = now - self.login_window_seconds
+        self.failed_login_attempts = {
+            ip: [ts for ts in attempts if ts >= attempt_threshold]
+            for ip, attempts in self.failed_login_attempts.items()
+            if any(ts >= attempt_threshold for ts in attempts)
+        }
+        self.lockouts = {ip: until for ip, until in self.lockouts.items() if until > now}
+        self._last_state_cleanup = now
+
     def lockout_remaining_seconds(self, client_ip: str) -> int:
         now = time.time()
         with self.attempts_lock:
+            self._cleanup_state_if_due(now)
             until = self.lockouts.get(client_ip, 0)
             if until <= now:
                 self.lockouts.pop(client_ip, None)
@@ -116,6 +133,7 @@ class AuthManager:
         now = time.time()
         threshold = now - self.login_window_seconds
         with self.attempts_lock:
+            self._cleanup_state_if_due(now)
             attempts = [
                 ts
                 for ts in self.failed_login_attempts.get(client_ip, [])

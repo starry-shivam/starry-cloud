@@ -5,6 +5,12 @@ status_timeout_seconds: 2.5
 # Max number of concurrent workers for service status checks.
 status_workers: 8
 
+# Number of proxy layers in front of this app that should be trusted for
+# forwarded client IP/protocol headers. Use 0 when running directly, 1 when
+# behind one reverse proxy (for example, Nginx/Caddy/Traefik), and increase
+# only if you intentionally chain multiple trusted proxies.
+trusted_proxy_hops: 0
+
 bot_protection:
   # Block common crawler user-agent signatures on login and protected routes.
   block_known_crawlers: true

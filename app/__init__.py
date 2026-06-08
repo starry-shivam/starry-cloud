@@ -2,6 +2,7 @@ from datetime import timedelta
 import os
 
 from flask import Flask, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .api import STATUS_TIMEOUT_SECONDS_KEY, STATUS_WORKERS_KEY, api_bp
 from .auth import APP_CONFIG_KEY, auth_bp, init_auth
@@ -23,6 +24,14 @@ def build_app() -> Flask:
         static_folder=os.path.join(_ROOT, "static"),
         template_folder=os.path.join(_ROOT, "templates"),
     )
+    trusted_proxy_hops = max(0, int(cfg.get("trusted_proxy_hops", 0)))
+    if trusted_proxy_hops > 0:
+        flask_app.wsgi_app = ProxyFix(
+            flask_app.wsgi_app,
+            x_for=trusted_proxy_hops,
+            x_proto=trusted_proxy_hops,
+            x_host=trusted_proxy_hops,
+        )
     system_hostname = _read_system_hostname()
     device_model = _read_device_model()
     status_timeout_seconds = float(cfg.get("status_timeout_seconds", 2.5))

@@ -40,5 +40,6 @@ Notes:
 
 - `status_timeout_seconds` controls how long each service probe can take before it is treated as offline.
 - `status_workers` controls how many service checks run in parallel.
+- `trusted_proxy_hops` sets how many reverse-proxy hops are trusted when reading forwarded client headers (set `0` if no proxy, `1` for a single proxy).
 - `auth.secret_key` can be omitted if `SECRET_KEY` is provided in the environment.
 - `auth.password_hash` should be a Werkzeug-compatible password hash rather than a plain-text password.
