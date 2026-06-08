@@ -1,4 +1,5 @@
 import os
+import secrets
 import time
 from functools import wraps
 from threading import Lock
@@ -151,6 +152,20 @@ class AuthManager:
             self.lockouts.pop(client_ip, None)
 
 
+def generate_csrf_token() -> str:
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_hex(32)
+    return session["_csrf_token"]
+
+
+def validate_csrf_token() -> bool:
+    token = session.get("_csrf_token", "")
+    submitted = request.form.get("csrf_token", "")
+    if not token or not submitted:
+        return False
+    return secrets.compare_digest(token, submitted)
+
+
 def init_auth(app, cfg: dict) -> AuthManager:
     manager = AuthManager(cfg)
     app.extensions[AUTH_MANAGER_KEY] = manager
@@ -158,6 +173,11 @@ def init_auth(app, cfg: dict) -> AuthManager:
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_SECURE"] = manager.secure_cookie
+
+    @app.context_processor
+    def inject_csrf_token():
+        return {"csrf_token": generate_csrf_token}
+
     return manager
 
 
@@ -207,6 +227,10 @@ def login():
         url_for("auth.login", next=next_url) if next_url else url_for("auth.login")
     )
 
+    if not validate_csrf_token():
+        flash("Invalid or missing security token.")
+        return redirect(login_url)
+
     lockout_seconds = manager.lockout_remaining_seconds(client_ip)
     if lockout_seconds > 0:
         wait_minutes = max(1, (lockout_seconds + 59) // 60)
@@ -221,11 +245,14 @@ def login():
     submitted_username = request.form.get("username", "")
     submitted_password = request.form.get("password", "")
 
-    if submitted_username == manager.username and check_password_hash(
-        manager.password_hash, submitted_password
-    ):
+    username_ok = secrets.compare_digest(submitted_username, manager.username)
+    password_ok = check_password_hash(manager.password_hash, submitted_password)
+
+    if username_ok and password_ok:
         manager.clear_failed_logins(client_ip)
+        session.clear()
         session["authenticated"] = True
+        session["_csrf_token"] = secrets.token_hex(32)
         session.permanent = True
         return redirect(
             next_url if is_safe_next_url(next_url) else url_for("pages.index")
@@ -238,5 +265,7 @@ def login():
 
 @auth_bp.post("/logout")
 def logout():
+    if not validate_csrf_token():
+        return ("", 400)
     session.clear()
     return redirect(url_for("auth.login"))

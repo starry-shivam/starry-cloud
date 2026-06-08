@@ -2,9 +2,16 @@
 
 A self-hosted dashboard for my personal services with live status checks, system resource monitoring, and password-protected access. Useful organizing and monitoring self-hosted apps in one cozy place.
 
-<img width="1264" height="670" alt="image" src="https://github.com/user-attachments/assets/c261a912-5fba-4b5f-a222-f80ab4cbd6b5" />
+<img width="1264" height="670" alt="IMG_20260608_162548" src="https://github.com/user-attachments/assets/34a8760e-7818-4bb1-99a8-d315fc5976dc" />
 
 ---
+
+### Configuration
+
+The app uses two config files:
+
+- `config.yml` for dashboard content and app behavior.
+- `auth.yml` for authentication settings.
 
 ### Quick Start
 
@@ -29,17 +36,4 @@ docker compose up -d
 
 The app will be available at `http://localhost:5000`.
 
-### Configuration
 
-The app uses two config files:
-
-- `config.yml` for dashboard content and app behavior.
-- `auth.yml` for authentication settings.
-
-Notes:
-
-- `status_timeout_seconds` controls how long each service probe can take before it is treated as offline.
-- `status_workers` controls how many service checks run in parallel.
-- `trusted_proxy_hops` sets how many reverse-proxy hops are trusted when reading forwarded client headers (set `0` if no proxy, `1` for a single proxy).
-- `auth.secret_key` can be omitted if `SECRET_KEY` is provided in the environment.
-- `auth.password_hash` should be a Werkzeug-compatible password hash rather than a plain-text password.

@@ -30,6 +30,7 @@
           <p class="auth-error" role="alert">{{ error }}</p>
           {% endif %}
           <form method="post" class="auth-form" autocomplete="on">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input class="auth-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
             <label class="auth-label" for="username">Username</label>
             <input class="auth-input" id="username" name="username" type="text" required autofocus />

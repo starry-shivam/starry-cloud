@@ -61,6 +61,7 @@
             </svg>
           </button>
           <form method="post" action="/logout" class="logout-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button class="logout-button" type="submit">Logout</button>
           </form>
         </div>

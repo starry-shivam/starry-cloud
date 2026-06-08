@@ -29,10 +29,7 @@ services:
         max-size: "10m"
         max-file: "3"
     environment:
-      - GUNICORN_WORKERS=1
       - GUNICORN_THREADS=2
-      - PYTHONDONTWRITEBYTECODE=1
-      - PYTHONUNBUFFERED=1
     volumes:
       # App settings file (create from config.example.yml):
       - type: bind

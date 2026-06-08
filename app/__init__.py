@@ -54,6 +54,8 @@ def build_app() -> Flask:
             "X-Robots-Tag",
             "noindex, nofollow, noarchive, nosnippet, noimageindex",
         )
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
         if not request.path.startswith("/static/"):
             response.headers.setdefault(
                 "Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"
