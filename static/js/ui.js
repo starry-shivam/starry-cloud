@@ -5,7 +5,7 @@ import { updateHeroGreeting, updateHeroSubtitle } from "./clock.js";
 
 const HOST_STATUS_INTERVAL = 6000;
 const SERVICE_STATUS_INTERVAL = 4000;
-const SYSTEM_STATS_INTERVAL = 5000;
+const SYSTEM_STATS_INTERVAL = 3000;
 
 async function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
