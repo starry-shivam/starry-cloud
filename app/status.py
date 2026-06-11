@@ -3,6 +3,7 @@ import os
 import time
 import re
 from threading import Lock
+from urllib.parse import urlparse
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -56,18 +57,48 @@ _last_cpu_totals = None
 _cpu_cores: int | None = None
 _cpu_max_hz: float | None = None
 
+STATUS_PROBE_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/137.0.0.0 Safari/537.36"
+    ),
+    "Accept": "*/*",
+}
+
 
 def _host_path(root: str, path: str) -> str:
     return os.path.join(root, path.lstrip("/"))
 
 
 def is_service_online(url: str, timeout_seconds: float = 2.5) -> bool:
-    req = Request(url, method="HEAD")
-    try:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return False
+
+    def _probe(method: str):
+        req = Request(url, method=method, headers=STATUS_PROBE_HEADERS)
         with urlopen(req, timeout=timeout_seconds) as response:
-            return response.status < 500
+            return response.status
+
+    def _is_reachable_status(status_code: int) -> bool:
+        # 4xx can still mean the host is up (auth required, bot challenge, etc.).
+        return status_code < 500
+
+    try:
+        status_code = _probe("HEAD")
+        return _is_reachable_status(status_code)
     except HTTPError as err:
-        return err.code < 500
+        # If HEAD is blocked/unsupported, retry with GET before deciding.
+        if err.code in {401, 403, 405, 429, 501}:
+            try:
+                status_code = _probe("GET")
+                return _is_reachable_status(status_code)
+            except HTTPError as get_err:
+                return _is_reachable_status(get_err.code)
+            except (URLError, TimeoutError, ValueError):
+                return False
+        return _is_reachable_status(err.code)
     except (URLError, TimeoutError, ValueError):
         return False
 
