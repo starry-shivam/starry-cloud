@@ -4,7 +4,7 @@ import os
 from flask import Flask, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .api import STATUS_TIMEOUT_SECONDS_KEY, STATUS_WORKERS_KEY, api_bp
+from .api import api_bp
 from .auth import APP_CONFIG_KEY, auth_bp, init_auth
 from .config import load_config
 from .routes import DEVICE_MODEL_KEY, SYSTEM_HOSTNAME_KEY, pages_bp
@@ -34,16 +34,11 @@ def build_app() -> Flask:
         )
     system_hostname = _read_system_hostname()
     device_model = _read_device_model()
-    status_timeout_seconds = float(cfg.get("status_timeout_seconds", 2.5))
-    status_workers = int(cfg.get("status_workers", 8))
-
     auth_manager = init_auth(flask_app, cfg)
 
     flask_app.config[APP_CONFIG_KEY] = cfg
     flask_app.config[SYSTEM_HOSTNAME_KEY] = system_hostname
     flask_app.config[DEVICE_MODEL_KEY] = device_model
-    flask_app.config[STATUS_TIMEOUT_SECONDS_KEY] = status_timeout_seconds
-    flask_app.config[STATUS_WORKERS_KEY] = status_workers
     flask_app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(
         days=max(auth_manager.session_days, 1)
     )

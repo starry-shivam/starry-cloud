@@ -117,7 +117,9 @@ class AuthManager:
             for ip, attempts in self.failed_login_attempts.items()
             if any(ts >= attempt_threshold for ts in attempts)
         }
-        self.lockouts = {ip: until for ip, until in self.lockouts.items() if until > now}
+        self.lockouts = {
+            ip: until for ip, until in self.lockouts.items() if until > now
+        }
         self._last_state_cleanup = now
 
     def lockout_remaining_seconds(self, client_ip: str) -> int:

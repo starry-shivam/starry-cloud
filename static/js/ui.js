@@ -3,7 +3,7 @@ import { updateHostStatus, updateServiceStatuses } from "./status.js";
 import { updateSystemStats } from "./stats.js";
 import { updateHeroGreeting, updateHeroSubtitle } from "./clock.js";
 
-const HOST_STATUS_INTERVAL = 6000;
+const HOST_STATUS_INTERVAL = 2000;
 const SERVICE_STATUS_INTERVAL = 4000;
 const SYSTEM_STATS_INTERVAL = 3000;
 

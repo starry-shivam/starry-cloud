@@ -7,6 +7,55 @@ const consecutiveFailures = new Map();
 let latestServiceStatusRequestId = 0;
 const OFFLINE_FAILURE_THRESHOLD = 2;
 
+function applyServiceStatus(dot, state) {
+    setServiceDotState(dot, state);
+
+    dot.title =
+        state === "online"
+            ? "Online"
+            : state === "offline"
+              ? "Offline"
+              : "Unknown";
+
+    return state;
+}
+
+async function readStatusStream(res, onStatus) {
+    const decoder = new TextDecoder();
+    const reader = res.body?.getReader();
+
+    if (!reader) {
+        const text = await res.text();
+        for (const line of text.split(/\r?\n/)) {
+            if (!line.trim()) continue;
+            onStatus(JSON.parse(line));
+        }
+        return;
+    }
+
+    let buffer = "";
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex = buffer.indexOf("\n");
+        while (newlineIndex !== -1) {
+            const line = buffer.slice(0, newlineIndex).trim();
+            buffer = buffer.slice(newlineIndex + 1);
+            if (line) {
+                onStatus(JSON.parse(line));
+            }
+            newlineIndex = buffer.indexOf("\n");
+        }
+    }
+
+    const tail = buffer.trim();
+    if (tail) {
+        onStatus(JSON.parse(tail));
+    }
+}
+
 export async function updateHostStatus() {
     const dot = document.getElementById("statusDot");
     const pill = dot?.parentElement;
@@ -33,45 +82,47 @@ export async function updateServiceStatuses() {
     if (!statusDots.length) return;
 
     const requestId = ++latestServiceStatusRequestId;
+    const statusDotsById = new Map(
+        [...statusDots].map((dot) => [dot.getAttribute("data-service-id"), dot])
+    );
 
     try {
-        const res = await fetch(`/api/service-status?t=${Date.now()}`, {
+        const res = await fetch(`/api/service-status?stream=1&t=${Date.now()}`, {
             method: "GET",
             cache: "no-store",
         });
         if (!res.ok) throw new Error("status endpoint failed");
 
-        const payload = await res.json();
-        const statuses = payload?.statuses || {};
+        await readStatusStream(res, (status) => {
+            if (requestId !== latestServiceStatusRequestId) return;
 
-        // Ignore stale responses when a newer poll already completed.
-        if (requestId !== latestServiceStatusRequestId) return;
+            const serviceId = String(status?.id);
+            const isOnline = status?.online;
+            const dot = statusDotsById.get(serviceId);
 
-        statusDots.forEach((dot) => {
-            const serviceId = dot.getAttribute("data-service-id");
-            const isOnline = statuses[String(serviceId)];
+            if (!dot) return;
 
             if (isOnline === true) {
                 consecutiveFailures.set(serviceId, 0);
-                setServiceDotState(dot, "online");
-                dot.title = "Online";
+                applyServiceStatus(dot, "online");
             } else if (isOnline === false) {
                 const failureCount = (consecutiveFailures.get(serviceId) || 0) + 1;
                 consecutiveFailures.set(serviceId, failureCount);
 
                 if (failureCount >= OFFLINE_FAILURE_THRESHOLD) {
-                    setServiceDotState(dot, "offline");
-                    dot.title = "Offline";
+                    applyServiceStatus(dot, "offline");
+                } else {
+                    applyServiceStatus(dot, "unknown");
                 }
             } else {
-                setServiceDotState(dot, "unknown");
-                dot.title = "Unknown";
+                applyServiceStatus(dot, "unknown");
             }
         });
-    } catch {
+    } catch (err) {
+        console.error("Failed to refresh service statuses:", err);
+
         statusDots.forEach((dot) => {
-            setServiceDotState(dot, "unknown");
-            dot.title = "Unknown";
+            applyServiceStatus(dot, "unknown");
         });
     }
 }
