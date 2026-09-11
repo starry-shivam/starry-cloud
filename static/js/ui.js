@@ -37,13 +37,13 @@ function isPrivateHostname(hostname) {
 function getPreferredServiceUrl(card) {
     const lanUrl = card.getAttribute("data-lan-url");
     if (lanUrl && isPrivateHostname(window.location.hostname)) return lanUrl;
-    return card.getAttribute("data-url");
+    return card.getAttribute("data-url") || lanUrl;
 }
 
 // Service cards with both a domain and LAN link expose explicit chip links
 // for each method; clicking elsewhere on the card opens the preferred one.
 function initServiceCards() {
-    document.querySelectorAll(".service-card[data-url]").forEach((card) => {
+    document.querySelectorAll(".service-card[data-url], .service-card[data-lan-url]").forEach((card) => {
         card.setAttribute("role", "link");
         card.setAttribute("tabindex", "0");
 
