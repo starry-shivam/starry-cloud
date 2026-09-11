@@ -1,5 +1,6 @@
 import glob
 import os
+import socket
 import time
 import re
 from threading import Lock
@@ -17,6 +18,18 @@ def _select_stats_path(
 
     check_path = probe_path or mounted_path
     return mounted_path if os.path.exists(check_path) else native_path
+
+
+def get_local_ip() -> str | None:
+    # No packets are actually sent; this just asks the OS which local
+    # interface/IP would be used to route to an external address.
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.settimeout(1)
+            sock.connect(("8.8.8.8", 80))
+            return sock.getsockname()[0]
+    except OSError:
+        return None
 
 
 HOST_PROC = _select_stats_path("HOST_PROC", "/host/proc", "/proc", "/host/proc/uptime")

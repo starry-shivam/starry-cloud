@@ -19,19 +19,33 @@ bot_protection:
   login_window_seconds: 300
   login_lockout_seconds: 900
 
+# Optional override for the "Local" button's host when using `lan_port`
+# below. Auto-detected by default; set this if auto-detection picks the
+# wrong address (common when running in Docker without host networking).
+# lan_host: "192.168.1.100"
+
 # Available services to show on the dashboard. Order matters.
+# Add `web_url` to show a public "Web" button. For LAN-only services, omit it
+# and add `lan_port` (just a port number); the app builds a "Local" button at
+# `http://<lan_host>:<port>` using the device's local IP (see `lan_host` above).
 services:
   - name: "Service One"
-    url: "https://service-one.example.com"
+    web_url: "https://service-one.example.com"
     emoji: "🌐"
     description: "Replace with your first service"
 
   - name: "Service Two"
-    url: "https://service-two.example.com"
+    web_url: "https://service-two.example.com"
     emoji: "🧩"
     description: "Replace with your second service"
 
   - name: "Local Service"
-    url: "http://192.168.1.100:8080"
+    lan_port: 8080
     emoji: "🏠"
     description: "Example local/LAN service"
+
+  - name: "Dual Access Service"
+    web_url: "https://dual.example.com"
+    lan_port: 9090
+    emoji: "🔀"
+    description: "Example service reachable via both domain and LAN"

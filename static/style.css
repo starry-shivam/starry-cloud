@@ -447,6 +447,7 @@ body::after {
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 
   /* Staggered entrance */
   animation: fadeUp 0.45s var(--ease-out) both;
@@ -476,6 +477,46 @@ body::after {
 .service-card:active {
   transform: scale(0.97);
   transition-duration: 0.1s;
+}
+
+.service-card:focus-visible {
+  outline: 2px solid var(--accent, #6366f1);
+  outline-offset: 2px;
+}
+
+.service-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.service-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+  background: var(--accent-soft);
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition:
+    background 0.18s var(--ease-std),
+    transform 0.18s var(--ease-spring);
+}
+
+.service-action-btn:hover {
+  background: var(--glass-bg-hover);
+  transform: translateY(-1px);
+}
+
+.service-action-btn:active {
+  transform: scale(0.95);
 }
 
 .service-header {
@@ -547,13 +588,6 @@ body::after {
   font-size: 0.8rem;
   color: var(--text-soft);
   line-height: 1.45;
-}
-
-.service-url {
-  margin: 0.35rem 0 0;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  word-break: break-all;
 }
 
 /* =========================

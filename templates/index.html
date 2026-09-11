@@ -103,7 +103,12 @@
           </div>
           <div class="services-grid">
             {% for svc in services %}
-            <a class="service-card" href="{{ svc.url }}" target="_blank" rel="noopener noreferrer" style="--card-index: {{ loop.index0 }}">
+            <div
+              class="service-card"
+              style="--card-index: {{ loop.index0 }}"
+              {% if svc.web_url %}data-url="{{ svc.web_url }}"{% endif %}
+              {% if svc.lan_url %}data-lan-url="{{ svc.lan_url }}"{% endif %}
+            >
               <div class="service-header">
                 <div class="service-left">
                   <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>
@@ -119,8 +124,31 @@
               {% if svc.description %}
               <p class="service-description">{{ svc.description }}</p>
               {% endif %}
-              <p class="service-url">{{ svc.url }}</p>
-            </a>
+              <div class="service-actions">
+                {% if svc.web_url %}
+                <a
+                  class="service-action-btn"
+                  href="{{ svc.web_url }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open {{ svc.name }} on the web"
+                >
+                  <span aria-hidden="true">🌐</span> Web
+                </a>
+                {% endif %}
+                {% if svc.lan_url %}
+                <a
+                  class="service-action-btn"
+                  href="{{ svc.lan_url }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open {{ svc.name }} on the local network"
+                >
+                  <span aria-hidden="true">🏠</span> Local
+                </a>
+                {% endif %}
+              </div>
+            </div>
             {% endfor %}
           </div>
         </section>

@@ -26,8 +26,11 @@ def service_status():
 
     def check_one(idx_and_service):
         idx, service = idx_and_service
-        service_url = service.get("url", "")
-        online = is_service_online(service_url, timeout_seconds=_PROBE_TIMEOUT_SECONDS)
+        urls = [u for u in (service.get("web_url"), service.get("lan_url")) if u]
+        online = any(
+            is_service_online(url, timeout_seconds=_PROBE_TIMEOUT_SECONDS)
+            for url in urls
+        )
         return str(idx), online
 
     workers = max(1, len(services))
