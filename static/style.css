@@ -684,6 +684,7 @@ body::after {
 }
 
 .auth-submit {
+  display: block;
   margin-top: 0.5rem;
   border: none;
   border-radius: 12px;
@@ -693,6 +694,8 @@ body::after {
   font-weight: 600;
   padding: 0.62rem 0.82rem;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
   transition:
     transform 0.18s var(--ease-spring),
     filter 0.18s var(--ease-std);
@@ -715,6 +718,64 @@ body::after {
 
 .auth-submit:active {
   transform: scale(0.98);
+}
+
+.oidc-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 0.75rem;
+  padding: 0.62rem 0.82rem;
+  border: 1px solid rgba(30, 75, 105, 0.24);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    transform 0.18s var(--ease-spring),
+    background-color 0.18s var(--ease-std),
+    border-color 0.18s var(--ease-std);
+}
+
+.oidc-submit:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.oidc-submit:active {
+  transform: scale(0.985);
+}
+
+.oidc-submit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.oidc-submit-icon {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+:root[data-theme="dark"] .oidc-submit {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+:root[data-theme="dark"] .oidc-submit:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .auth-error {

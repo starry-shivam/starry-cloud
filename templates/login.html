@@ -29,6 +29,7 @@
           {% if error %}
           <p class="auth-error" role="alert">{{ error }}</p>
           {% endif %}
+          {% if password_enabled %}
           <form method="post" class="auth-form" autocomplete="on">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input class="auth-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
@@ -40,6 +41,17 @@
 
             <button class="auth-submit" type="submit">Continue</button>
           </form>
+          {% endif %}
+          {% if oidc_enabled %}
+          <a class="oidc-submit" href="{{ url_for('auth.oidc_login', next=request.args.get('next', '')) }}">
+            <svg class="oidc-submit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="10" cy="7" r="4" />
+              <path d="M20 8v6m-3-3h6" />
+            </svg>
+            <span>Continue with {{ oidc_provider_name }}</span>
+          </a>
+          {% endif %}
         </section>
       </main>
     </div>

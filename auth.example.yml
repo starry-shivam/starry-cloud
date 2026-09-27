@@ -1,4 +1,6 @@
 auth:
+  # Set false to require OIDC and disable username/password login.
+  password_enabled: true
   username: "replace-me"
   # Generate with gen_auth.py or werkzeug.security.generate_password_hash(...)
   password_hash: "replace-me"
@@ -6,3 +8,16 @@ auth:
   secret_key: "replace-me"
   session_days: 30
   secure_cookie: true
+
+  # Optional OpenID Connect provider. Set enabled: true and use the callback
+  # URL https://your-dashboard.example.com/login/oidc/callback at the provider.
+  oidc:
+    enabled: false
+    # Button label becomes "Continue with <provider_name>" (default: OIDC).
+    provider_name: "Example Identity"
+    discovery_url: "https://identity.example.com/.well-known/openid-configuration"
+    client_id: "replace-me"
+    client_secret: "replace-me"
+    scope: "openid email profile"
+    # When non-empty, only these verified email addresses may sign in.
+    allowed_emails: []

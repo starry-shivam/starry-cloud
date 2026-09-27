@@ -5,6 +5,8 @@ from functools import wraps
 from threading import Lock
 from urllib.parse import urlparse
 
+from authlib.integrations.base_client.errors import OAuthError
+from authlib.integrations.flask_client import OAuth
 from flask import (
     Blueprint,
     current_app,
@@ -61,8 +63,33 @@ class AuthManager:
         self.secret_key = secret_key
         self.session_days = int(auth_cfg.get("session_days", 30))
         self.secure_cookie = str(auth_cfg.get("secure_cookie", False)).lower() == "true"
+        self.password_enabled = (
+            str(auth_cfg.get("password_enabled", True)).lower() == "true"
+        )
         self.username = auth_cfg.get("username")
         self.password_hash = auth_cfg.get("password_hash")
+        oidc_cfg = auth_cfg.get("oidc") or {}
+        if not isinstance(oidc_cfg, dict):
+            raise RuntimeError("auth.oidc must be a mapping.")
+        self.oidc_enabled = str(oidc_cfg.get("enabled", False)).lower() == "true"
+        self.oidc_provider_name = str(oidc_cfg.get("provider_name") or "OIDC").strip()
+        if not self.oidc_provider_name:
+            self.oidc_provider_name = "OIDC"
+        self.oidc_discovery_url = oidc_cfg.get("discovery_url")
+        self.oidc_client_id = oidc_cfg.get("client_id")
+        self.oidc_client_secret = oidc_cfg.get("client_secret")
+        oidc_scopes = str(oidc_cfg.get("scope", "openid email profile")).split()
+        if "openid" not in oidc_scopes:
+            oidc_scopes.insert(0, "openid")
+        self.oidc_scope = " ".join(oidc_scopes)
+        allowed_emails = oidc_cfg.get("allowed_emails") or []
+        if not isinstance(allowed_emails, list):
+            raise RuntimeError("auth.oidc.allowed_emails must be a list.")
+        self.oidc_allowed_emails = {
+            str(email).strip().lower()
+            for email in allowed_emails
+            if str(email).strip()
+        }
         self.login_max_attempts = max(1, int(bot_cfg.get("login_max_attempts", 5)))
         self.login_window_seconds = max(
             10, int(bot_cfg.get("login_window_seconds", 300))
@@ -84,10 +111,18 @@ class AuthManager:
         self.attempts_lock = Lock()
         self._last_state_cleanup = 0.0
 
-        if not self.username or not self.password_hash:
+        if self.password_enabled and (not self.username or not self.password_hash):
             raise RuntimeError(
                 "Authentication requires auth.username and auth.password_hash in auth.yml."
             )
+        if self.oidc_enabled and not all(
+            (self.oidc_discovery_url, self.oidc_client_id, self.oidc_client_secret)
+        ):
+            raise RuntimeError(
+                "OIDC requires auth.oidc.discovery_url, client_id, and client_secret."
+            )
+        if not self.password_enabled and not self.oidc_enabled:
+            raise RuntimeError("At least one authentication method must be enabled.")
 
     def get_client_ip(self) -> str:
         # Use remote_addr only. If the app is behind trusted proxies,
@@ -176,6 +211,19 @@ def init_auth(app, cfg: dict) -> AuthManager:
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_SECURE"] = manager.secure_cookie
 
+    if manager.oidc_enabled:
+        oauth = OAuth(app)
+        manager.oidc_client = oauth.register(
+            name="oidc",
+            client_id=manager.oidc_client_id,
+            client_secret=manager.oidc_client_secret,
+            server_metadata_url=manager.oidc_discovery_url,
+            client_kwargs={
+                "scope": manager.oidc_scope,
+                "code_challenge_method": "S256",
+            },
+        )
+
     @app.context_processor
     def inject_csrf_token():
         return {"csrf_token": generate_csrf_token}
@@ -219,7 +267,17 @@ def login():
             return ("Bot access denied", 403)
         messages = get_flashed_messages()
         error = messages[0] if messages else None
-        return render_template("login.html", cfg=cfg, error=error)
+        return render_template(
+            "login.html",
+            cfg=cfg,
+            error=error,
+            password_enabled=manager.password_enabled,
+            oidc_enabled=manager.oidc_enabled,
+            oidc_provider_name=manager.oidc_provider_name,
+        )
+
+    if not manager.password_enabled:
+        return ("Password authentication is disabled", 404)
 
     # POST always redirect after processing (PRG pattern) so a browser
     # refresh or server-restart replay cannot resubmit credentials.
@@ -263,6 +321,84 @@ def login():
     manager.register_failed_login(client_ip)
     _flash_error_or_lockout(manager, client_ip)
     return redirect(login_url)
+
+
+@auth_bp.get("/login/oidc")
+def oidc_login():
+    manager = get_auth_manager()
+    if not manager.oidc_enabled:
+        return ("OIDC authentication is disabled", 404)
+    if manager.is_disallowed_user_agent():
+        return ("Bot access denied", 403)
+
+    next_url = request.args.get("next", "")
+    session["oidc_next"] = next_url if is_safe_next_url(next_url) else ""
+    callback_url = url_for("auth.oidc_callback", _external=True)
+    return manager.oidc_client.authorize_redirect(callback_url)
+
+
+@auth_bp.get("/login/oidc/callback")
+def oidc_callback():
+    manager = get_auth_manager()
+    if not manager.oidc_enabled:
+        return ("OIDC authentication is disabled", 404)
+
+    try:
+        token = manager.oidc_client.authorize_access_token()
+    except OAuthError as exc:
+        current_app.logger.warning(
+            "OIDC token exchange or state validation failed (%s)",
+            type(exc).__name__,
+        )
+        session.pop("oidc_next", None)
+        flash("OIDC sign-in failed. Please try again.")
+        return redirect(url_for("auth.login"))
+
+    userinfo = token.get("userinfo")
+    if not isinstance(userinfo, dict) or not userinfo.get("sub"):
+        claim_names = sorted(userinfo.keys()) if isinstance(userinfo, dict) else []
+        current_app.logger.warning(
+            "OIDC response did not contain a valid user identity "
+            "(userinfo_type=%s, claim_names=%s)",
+            type(userinfo).__name__,
+            claim_names,
+        )
+        session.pop("oidc_next", None)
+        flash("The identity provider did not return a valid user identity.")
+        return redirect(url_for("auth.login"))
+
+    if manager.oidc_allowed_emails:
+        email = str(userinfo.get("email", "")).strip().lower()
+        if (
+            email not in manager.oidc_allowed_emails
+            or userinfo.get("email_verified") is not True
+        ):
+            verified_claim = userinfo.get("email_verified")
+            verified_state = (
+                "true"
+                if verified_claim is True
+                else "false"
+                if verified_claim is False
+                else "missing"
+                if verified_claim is None
+                else type(verified_claim).__name__
+            )
+            current_app.logger.warning(
+                "OIDC access denied by email allowlist "
+                "(email_matched=%s, email_verified=%s)",
+                email in manager.oidc_allowed_emails,
+                verified_state,
+            )
+            session.pop("oidc_next", None)
+            flash("This account is not allowed to sign in.")
+            return redirect(url_for("auth.login"))
+
+    next_url = session.pop("oidc_next", "")
+    session.clear()
+    session["authenticated"] = True
+    session["_csrf_token"] = secrets.token_hex(32)
+    session.permanent = True
+    return redirect(next_url if is_safe_next_url(next_url) else url_for("pages.index"))
 
 
 @auth_bp.post("/logout")
