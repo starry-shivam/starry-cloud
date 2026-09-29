@@ -1,28 +1,26 @@
-FROM python:3.14.5-alpine
+FROM rust:1-alpine3.22 AS builder
+
+WORKDIR /build
+RUN apk add --no-cache build-base
+
+COPY rust/Cargo.toml rust/Cargo.lock ./rust/
+COPY rust/src ./rust/src
+COPY templates ./templates
+
+WORKDIR /build/rust
+RUN cargo build --locked --release
+
+FROM alpine:3.22
+
+RUN apk add --no-cache ca-certificates \
+    && addgroup -S -g 1000 app \
+    && adduser -S -D -H -u 1000 -G app app
 
 WORKDIR /app
+COPY --from=builder --chown=1000:1000 /build/rust/target/release/starry-cloud /usr/local/bin/starry-cloud
+COPY --chown=1000:1000 static ./static
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY gen_auth.py .
-COPY templates ./templates
-COPY static ./static
-COPY app/ ./app/
-
+USER 1000:1000
 EXPOSE 5000
-
-CMD gunicorn \
-	--bind 0.0.0.0:5000 \
-	--workers ${GUNICORN_WORKERS:-1} \
-	--threads ${GUNICORN_THREADS:-2} \
-	--worker-class gthread \
-	--access-logfile - \
-	--access-logformat 'ip=%(h)s xff=%({x-forwarded-for}i)s method=%(m)s path=%(U)s status=%(s)s rt=%(L)s' \
-	--error-logfile - \
-	--log-level info \
-	--capture-output \
-	app:app
+ENTRYPOINT ["/usr/local/bin/starry-cloud"]
+CMD ["serve"]

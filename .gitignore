@@ -1,39 +1,3 @@
-config# -------------------------------------------------------------------
-# Python
-# -------------------------------------------------------------------
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.pkl
-*.sqlite3
-*.db
-
-# Virtual environments
-venv/
-env/
-.venv/
-
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-.eggs/
-
-# Logs
-*.log
-
-# Byte-compiled / cache files
-.pytest_cache/
-.cache/
-.ruff_cache/
-
-# -------------------------------------------------------------------
-# Flask
-# -------------------------------------------------------------------
-instance/
-*.pid
-
 # If you store config overrides locally:
 config.yml
 auth.yml
@@ -42,7 +6,6 @@ auth.yml
 .env
 .env.*
 !.env.example
-.flaskenv
 secrets.yml
 
 # -------------------------------------------------------------------
@@ -73,15 +36,6 @@ Desktop.ini
 # JetBrains
 .idea/
 *.iml
-
-# -------------------------------------------------------------------
-# Coverage / testing
-# -------------------------------------------------------------------
-htmlcov/
-.coverage
-coverage.xml
-nosetests.xml
-pytestdebug.log
 
 # -------------------------------------------------------------------
 # Node (if you ever add frontend build tools)

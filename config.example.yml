@@ -7,14 +7,8 @@ subtitle: "A cozy home for my self-hosted apps"
 # and increase only if you intentionally chain multiple trusted proxies.
 trusted_proxy_hops: 0
 
-bot_protection:
-  # Block common crawler user-agent signatures on login and protected routes.
-  block_known_crawlers: true
-
-  # Additional user-agent substrings to block.
-  blocked_user_agents: []
-
-  # Login throttling controls.
+login_protection:
+  # Limit failed password attempts per client IP.
   login_max_attempts: 3
   login_window_seconds: 300
   login_lockout_seconds: 900

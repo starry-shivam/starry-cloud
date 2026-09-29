@@ -18,7 +18,7 @@ services:
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,size=64m
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/login', timeout=2)"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5000/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -28,8 +28,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    environment:
-      - GUNICORN_THREADS=2
     volumes:
       # App settings file (create from config.example.yml):
       - type: bind
@@ -37,7 +35,7 @@ services:
         target: /app/config.yml
         read_only: true
       # Auth secrets file — generate with:
-      # docker compose run --rm starry-cloud python3 gen_auth.py
+      # docker compose run --rm starry-cloud gen-auth
       - type: bind
         source: ./auth.yml
         target: /app/auth.yml

@@ -2,7 +2,7 @@ auth:
   # Set false to require OIDC and disable username/password login.
   password_enabled: true
   username: "replace-me"
-  # Generate with gen_auth.py or werkzeug.security.generate_password_hash(...)
+  # Generate with `docker compose run --rm starry-cloud gen-auth`.
   password_hash: "replace-me"
   # Set a long random value here or provide SECRET_KEY in the environment.
   secret_key: "replace-me"
