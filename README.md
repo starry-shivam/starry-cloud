@@ -2,7 +2,7 @@
 
 A self-hosted dashboard for personal services with live status checks, system resource monitoring, and protected access.
 
-<img width="1264" height="670" alt="IMG_20260608_162548" src="https://github.com/user-attachments/assets/34a8760e-7818-4bb1-99a8-d315fc5976dc" />
+<img width="1264" height="670" alt="image" src="https://github.com/user-attachments/assets/ec9a670e-c3b7-4230-86e4-6422a466341b" />
 
 ## Configuration
 
