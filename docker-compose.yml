@@ -8,8 +8,8 @@ services:
       - "5000:5000"
     user: "1000:1000"
     pids_limit: 128
-    mem_limit: 128m
-    memswap_limit: 128m
+    mem_limit: 32m
+    memswap_limit: 32m
     cap_drop:
       - ALL
     security_opt:
