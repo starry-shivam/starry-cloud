@@ -3,11 +3,11 @@ FROM rust:1-alpine3.22 AS builder
 WORKDIR /build
 RUN apk add --no-cache build-base
 
-COPY rust/Cargo.toml rust/Cargo.lock ./rust/
-COPY rust/src ./rust/src
+COPY app/Cargo.toml app/Cargo.lock ./app/
+COPY app/src ./app/src
 COPY templates ./templates
 
-WORKDIR /build/rust
+WORKDIR /build/app
 RUN cargo build --locked --release
 
 FROM alpine:3.22
@@ -17,7 +17,7 @@ RUN apk add --no-cache ca-certificates \
     && adduser -S -D -H -u 1000 -G app app
 
 WORKDIR /app
-COPY --from=builder --chown=1000:1000 /build/rust/target/release/starry-cloud /usr/local/bin/starry-cloud
+COPY --from=builder --chown=1000:1000 /build/app/target/release/starry-cloud /usr/local/bin/starry-cloud
 COPY --chown=1000:1000 static ./static
 
 USER 1000:1000
