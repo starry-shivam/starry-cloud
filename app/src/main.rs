@@ -787,19 +787,10 @@ async fn service_status(
 }
 
 async fn check_service(client: &reqwest::Client, service: &config::Service) -> bool {
-    let mut urls = Vec::new();
-    if let Some(url) = service.web_url.as_deref() {
-        urls.push(url);
-    }
-    if let Some(url) = service.lan_url.as_deref() {
-        urls.push(url);
-    }
-    for url in urls {
-        if service_online(client, url).await {
-            return true;
-        }
-    }
-    false
+    let Some(url) = service.url.as_deref() else {
+        return false;
+    };
+    service_online(client, url).await
 }
 
 async fn service_online(client: &reqwest::Client, target: &str) -> bool {

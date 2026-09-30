@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" {% if cfg.bg_image_url %}data-has-bg="1"{% endif %}>
   <head>
     <meta charset="utf-8" />
     <title>{{ cfg.title }}</title>
@@ -11,6 +11,15 @@
     <script>
       (function () {
         try {
+          if (document.documentElement.getAttribute("data-has-bg") === "1") {
+            document.documentElement.setAttribute("data-theme", "frosted");
+            var frostedMeta = document.querySelector('meta[name="theme-color"]');
+            if (frostedMeta) frostedMeta.setAttribute("content", "#000000");
+            var frostedApple = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+            if (frostedApple) frostedApple.setAttribute("content", "black-translucent");
+            return;
+          }
+
           var saved = localStorage.getItem("theme") || "auto";
           var systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
           var theme = saved === "auto" ? (systemDark ? "dark" : "light") : saved;
@@ -35,6 +44,9 @@
     <link rel="apple-touch-icon" href="/static/dragon.png" />
   </head>
   <body>
+    {% if cfg.bg_image_url %}
+    <div class="bg-image-layer{% if cfg.bg_image_blur %} bg-image-blur{% endif %}" style="background-image: url('{{ cfg.bg_image_url }}')"></div>
+    {% endif %}
     <div id="loader" class="loader-overlay" aria-hidden="true">
       <div class="loader-spinner"></div>
     </div>
@@ -47,6 +59,7 @@
             {{ system_hostname }}
           </span>
           {% endif %}
+          {% if not cfg.bg_image_url %}
           <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
             <svg id="themeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5" />
@@ -60,6 +73,7 @@
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
           </button>
+          {% endif %}
           <form method="post" action="/logout" class="logout-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button class="logout-button" type="submit">Logout</button>
@@ -106,48 +120,47 @@
             <div
               class="service-card"
               style="--card-index: {{ loop.index0 }}"
-              {% if svc.web_url %}data-url="{{ svc.web_url }}"{% endif %}
-              {% if svc.lan_url %}data-lan-url="{{ svc.lan_url }}"{% endif %}
+              {% if svc.url %}data-url="{{ svc.url }}"{% endif %}
             >
-              <div class="service-header">
-                <div class="service-left">
-                  <div class="service-emoji">{{ svc.emoji or "⬛" }}</div>
-                  <h3 class="service-name">{{ svc.name }}</h3>
-                </div>
-                <span
-                  class="service-status status-unknown"
-                  data-service-id="{{ loop.index0 }}"
-                  title="Checking..."
-                  aria-label="Service status indicator"
-                ></span>
+              <span
+                class="service-status status-unknown"
+                data-service-id="{{ loop.index0 }}"
+                title="Checking..."
+                aria-label="Service status indicator"
+              ></span>
+              <div class="service-icon">
+                {% if svc.icon_url %}
+                <img src="{{ svc.icon_url }}" alt="" loading="lazy" />
+                {% else %}
+                <svg class="service-icon-fallback" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="4" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
+                </svg>
+                {% endif %}
               </div>
-              {% if svc.description %}
-              <p class="service-description">{{ svc.description }}</p>
+              <div class="service-body">
+                <h3 class="service-name">{{ svc.name }}</h3>
+                {% if svc.description %}
+                <p class="service-description">{{ svc.description }}</p>
+                {% endif %}
+              </div>
+              {% if svc.url %}
+              <a
+                class="service-action-btn"
+                href="{{ svc.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open {{ svc.name }}"
+                aria-label="Open {{ svc.name }}"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
               {% endif %}
-              <div class="service-actions">
-                {% if svc.web_url %}
-                <a
-                  class="service-action-btn"
-                  href="{{ svc.web_url }}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open {{ svc.name }} on the web"
-                >
-                  <span aria-hidden="true">🌐</span> Web
-                </a>
-                {% endif %}
-                {% if svc.lan_url %}
-                <a
-                  class="service-action-btn"
-                  href="{{ svc.lan_url }}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open {{ svc.name }} on the local network"
-                >
-                  <span aria-hidden="true">🏠</span> Local
-                </a>
-                {% endif %}
-              </div>
             </div>
             {% endfor %}
           </div>

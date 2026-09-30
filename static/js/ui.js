@@ -16,52 +16,28 @@ async function registerServiceWorker() {
     }
 }
 
-function isPrivateHostname(hostname) {
-    if (!hostname) return false;
-    if (hostname === "localhost" || hostname.endsWith(".local")) return true;
-
-    const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-    if (!ipv4) return false;
-
-    const [a, b] = ipv4.slice(1, 3).map(Number);
-    return (
-        a === 10 ||
-        a === 127 ||
-        (a === 172 && b >= 16 && b <= 31) ||
-        (a === 192 && b === 168)
-    );
-}
-
-// Prefer the LAN link when the dashboard itself is reached over the local
-// network (faster, no internet round-trip), otherwise fall back to the domain link.
-function getPreferredServiceUrl(card) {
-    const lanUrl = card.getAttribute("data-lan-url");
-    if (lanUrl && isPrivateHostname(window.location.hostname)) return lanUrl;
-    return card.getAttribute("data-url") || lanUrl;
-}
-
-// Service cards with both a domain and LAN link expose explicit chip links
-// for each method; clicking elsewhere on the card opens the preferred one.
+// Service cards open their configured URL when clicked anywhere except the
+// explicit "open" action button, which does the same via a normal link.
 function initServiceCards() {
-    document.querySelectorAll(".service-card[data-url], .service-card[data-lan-url]").forEach((card) => {
+    document.querySelectorAll(".service-card[data-url]").forEach((card) => {
         card.setAttribute("role", "link");
         card.setAttribute("tabindex", "0");
 
-        const openPreferred = () => {
-            const url = getPreferredServiceUrl(card);
+        const openService = () => {
+            const url = card.getAttribute("data-url");
             if (url) window.open(url, "_blank", "noopener,noreferrer");
         };
 
         card.addEventListener("click", (event) => {
             if (event.target.closest(".service-action-btn")) return;
-            openPreferred();
+            openService();
         });
 
         card.addEventListener("keydown", (event) => {
             if (event.target.closest(".service-action-btn")) return;
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                openPreferred();
+                openService();
             }
         });
     });

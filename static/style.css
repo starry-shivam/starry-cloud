@@ -52,6 +52,28 @@
   --accent-soft: rgba(123, 140, 255, 0.14);
 }
 
+/* Forced when a background image is configured; a single frosted-glass
+   look regardless of light/dark preference. */
+:root[data-theme="frosted"] {
+  color-scheme: dark;
+
+  --bg: transparent;
+
+  --glass-bg:           rgba(255, 255, 255, 0.14);
+  --glass-bg-hover:     rgba(255, 255, 255, 0.22);
+  --glass-border:       rgba(255, 255, 255, 0.28);
+  --glass-shadow:       0 8px 32px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --glass-hover-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --blur:               blur(28px) saturate(180%);
+
+  --text:       #ffffff;
+  --text-soft:  rgba(255, 255, 255, 0.78);
+  --text-muted: rgba(255, 255, 255, 0.58);
+
+  --accent:      #a9b8ff;
+  --accent-soft: rgba(169, 184, 255, 0.2);
+}
+
 *,
 *::before,
 *::after {
@@ -114,6 +136,34 @@ body::after {
   background:
     radial-gradient(ellipse 55% 50% at 80% 15%, rgba(160, 80, 180, 0.18) 0%, transparent 60%),
     radial-gradient(ellipse 50% 60% at 20% 85%, rgba(60, 160, 120, 0.14) 0%, transparent 60%);
+}
+
+/* Configured background image replaces the animated mesh entirely. */
+:root[data-theme="frosted"] body::before,
+:root[data-theme="frosted"] body::after {
+  display: none;
+}
+
+.bg-image-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-color: #0b0c14;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: scale(1.06);
+}
+
+.bg-image-layer.bg-image-blur {
+  filter: blur(24px);
+}
+
+.bg-image-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.52));
 }
 
 @keyframes meshShift1 {
@@ -192,6 +242,12 @@ body::after {
   gap: 0.5rem;
   justify-content: flex-end;
   margin-bottom: 0.5rem;
+}
+
+/* Keeps the hostname pill pinned to the left regardless of how many
+   action buttons (theme toggle, logout) render next to it. */
+.hero-actions .hostname-pill {
+  margin-right: auto;
 }
 
 .hero-greeting {
@@ -363,16 +419,16 @@ body::after {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 0.55rem;
   margin-bottom: 1rem;
 }
 
 .metric-card {
-  padding: 0.9rem 1rem;
-  border-radius: var(--radius-md);
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-sm);
   background: var(--glass-bg);
-  border: 2px solid var(--glass-border);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -388,31 +444,32 @@ body::after {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), var(--glass-hover-shadow);
 }
 
-:root[data-theme="dark"] .metric-card:hover {
+:root[data-theme="dark"] .metric-card:hover,
+:root[data-theme="frosted"] .metric-card:hover {
   border-color: rgba(255, 255, 255, 0.28);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), var(--glass-hover-shadow);
 }
 
 .metric-label {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   color: var(--text-soft);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
 }
 
 .metric-value {
-  margin: 0.45rem 0 0;
-  font-size: 1.05rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.94rem;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
 
 .metric-footer {
-  margin: 0.35rem 0 0;
-  font-size: 0.75rem;
+  margin: 0.2rem 0 0;
+  font-size: 0.68rem;
   color: var(--text-soft);
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .count-badge {
@@ -437,7 +494,11 @@ body::after {
    ========================= */
 
 .service-card {
-  padding: 1rem 1.15rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1.1rem;
   border-radius: var(--radius-md);
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -469,8 +530,8 @@ body::after {
     box-shadow: var(--glass-hover-shadow);
   }
 
-  .service-card:hover .service-emoji {
-    transform: scale(1.12) rotate(-5deg);
+  .service-card:hover .service-icon {
+    transform: scale(1.08) rotate(-3deg);
   }
 }
 
@@ -484,27 +545,18 @@ body::after {
   outline-offset: 2px;
 }
 
-.service-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-}
-
 .service-action-btn {
-  flex: 1;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.6rem;
+  width: 2.15rem;
+  height: 2.15rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--glass-border);
   background: var(--accent-soft);
   color: inherit;
   text-decoration: none;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
   transition:
     background 0.18s var(--ease-std),
     transform 0.18s var(--ease-spring);
@@ -519,14 +571,10 @@ body::after {
   transform: scale(0.95);
 }
 
-.service-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .service-status {
-  position: relative;
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -556,24 +604,34 @@ body::after {
   opacity: 0.6;
 }
 
-.service-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.service-emoji {
-  width: 2.2rem;
-  height: 2.2rem;
+.service-icon {
+  width: 2.6rem;
+  height: 2.6rem;
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
   border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  overflow: hidden;
   flex-shrink: 0;
   transition: transform 0.22s var(--ease-spring);
+}
+
+.service-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.3rem;
+}
+
+.service-icon-fallback {
+  color: var(--text-soft);
+}
+
+.service-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .service-name {
@@ -581,13 +639,21 @@ body::after {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 1rem;
 }
 
 .service-description {
-  margin: 0.4rem 0 0;
+  margin: 0.2rem 0 0;
   font-size: 0.8rem;
   color: var(--text-soft);
-  line-height: 1.45;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* =========================

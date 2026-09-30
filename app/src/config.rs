@@ -1,4 +1,4 @@
-use std::{env, fs, net::UdpSocket};
+use std::{env, fs};
 
 use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
@@ -14,6 +14,10 @@ pub struct AppConfig {
     #[serde(default)]
     pub trusted_proxy_hops: usize,
     #[serde(default)]
+    pub bg_image_url: Option<String>,
+    #[serde(default)]
+    pub bg_image_blur: bool,
+    #[serde(default)]
     pub services: Vec<Service>,
 }
 
@@ -22,13 +26,9 @@ pub struct Service {
     #[serde(default)]
     pub name: String,
     #[serde(default)]
-    pub web_url: Option<String>,
+    pub url: Option<String>,
     #[serde(default)]
-    pub lan_url: Option<String>,
-    #[serde(default)]
-    pub lan_port: Option<u16>,
-    #[serde(default)]
-    pub emoji: Option<String>,
+    pub icon_url: Option<String>,
     #[serde(default)]
     pub description: Option<String>,
 }
@@ -113,29 +113,9 @@ fn string_list(value: Option<&Value>) -> Result<Vec<String>, String> {
     }
 }
 
-fn resolve_lan_host(config: &Value) -> Option<String> {
-    if let Some(host) = string_value(mapping_value(config, "lan_host")) {
-        if !host.is_empty() {
-            return Some(host);
-        }
-    }
-
-    let socket = UdpSocket::bind("0.0.0.0:0").ok()?;
-    socket.connect("8.8.8.8:80").ok()?;
-    Some(socket.local_addr().ok()?.ip().to_string())
-}
-
 fn read_app_config(value: Value) -> Result<AppConfig, String> {
-    let lan_host = resolve_lan_host(&value);
-    let mut app: AppConfig =
+    let app: AppConfig =
         serde_yaml::from_value(value).map_err(|error| format!("invalid config.yml: {error}"))?;
-
-    for service in &mut app.services {
-        if let (Some(port), Some(host)) = (service.lan_port, lan_host.as_deref()) {
-            service.lan_url = Some(format!("http://{host}:{port}"));
-        }
-    }
-
     Ok(app)
 }
 

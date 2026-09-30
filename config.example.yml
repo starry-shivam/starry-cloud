@@ -13,33 +13,28 @@ login_protection:
   login_window_seconds: 300
   login_lockout_seconds: 900
 
-# Optional override for the "Local" button's host when using `lan_port`
-# below. Auto-detected by default; set this if auto-detection picks the
-# wrong address (common when running in Docker without host networking).
-# lan_host: "192.168.1.100"
+# Optional full-page background image. When set, the dashboard switches to a
+# frosted-glass look and the light/dark theme toggle is disabled.
+# bg_image_url: "https://example.com/wallpaper.jpg"
+# Blur the background image (frosted look stays regardless of this option).
+# bg_image_blur: false
 
 # Available services to show on the dashboard. Order matters.
-# Add `web_url` to show a public "Web" button. For LAN-only services, omit it
-# and add `lan_port` (just a port number); the app builds a "Local" button at
-# `http://<lan_host>:<port>` using the device's local IP (see `lan_host` above).
+# `url` is the single https/http address used both to open the service and to
+# check its online status. `icon_url` links a PNG (or other image) icon shown
+# on the card; omit it to fall back to a placeholder.
 services:
   - name: "Service One"
-    web_url: "https://service-one.example.com"
-    emoji: "🌐"
+    url: "https://service-one.example.com"
+    icon_url: "https://cdn.jsdelivr.net/gh/selfhst/icons@main/png/adguard-home-central-manager.png"
     description: "Replace with your first service"
 
   - name: "Service Two"
-    web_url: "https://service-two.example.com"
-    emoji: "🧩"
+    url: "https://service-two.example.com"
+    icon_url: "https://cdn.jsdelivr.net/gh/selfhst/icons@main/png/adguard-home.png"
     description: "Replace with your second service"
 
-  - name: "Local Service"
-    lan_port: 8080
-    emoji: "🏠"
-    description: "Example local/LAN service"
-
-  - name: "Dual Access Service"
-    web_url: "https://dual.example.com"
-    lan_port: 9090
-    emoji: "🔀"
-    description: "Example service reachable via both domain and LAN"
+  - name: "Service Three"
+    url: "https://service-three.example.com"
+    icon_url: "https://cdn.jsdelivr.net/gh/selfhst/icons@main/png/jellyfin.png"
+    description: "Replace with your third service"

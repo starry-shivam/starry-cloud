@@ -2,12 +2,14 @@ const THEME_KEY = "theme";
 const THEME_COLORS = {
     light: "#ffffff",
     dark: "#020617",
+    frosted: "#000000",
 };
 
 const root = document.documentElement;
 const icon = document.getElementById("themeIcon");
 const toggleBtn = document.getElementById("themeToggle");
 const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const hasBackgroundImage = root.getAttribute("data-has-bg") === "1";
 
 function getSystemTheme() {
     return mediaQuery.matches ? "dark" : "light";
@@ -77,6 +79,14 @@ function syncBrowserChrome(theme) {
 }
 
 export function applyTheme() {
+    // A configured background image forces a fixed frosted-glass look;
+    // the light/dark toggle is hidden and this becomes a no-op.
+    if (hasBackgroundImage) {
+        root.setAttribute("data-theme", "frosted");
+        syncBrowserChrome("frosted");
+        return;
+    }
+
     const saved = localStorage.getItem(THEME_KEY) || "auto";
     const themeToApply = saved === "auto" ? getSystemTheme() : saved;
 
@@ -102,6 +112,8 @@ export function toggleTheme() {
 }
 
 export function initTheme() {
+    if (hasBackgroundImage) return;
+
     toggleBtn?.addEventListener("click", toggleTheme);
     mediaQuery.addEventListener("change", () => {
         const saved = localStorage.getItem(THEME_KEY) || "auto";
