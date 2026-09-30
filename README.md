@@ -20,16 +20,21 @@ Set `auth.password_enabled: false` to disable password login; at least one authe
 
 ## Run
 
+Build the docker image
+```
+docker compose build
+```
+
 Generate password and signing-key settings for `auth.yml` with the bundled Rust binary:
 
 ```sh
 docker compose run --rm starry-cloud gen-auth
 ```
 
-Build and start the service:
+Start the service:
 
 ```sh
-docker compose up -d --build
+docker compose up -d
 ```
 
 The dashboard is available at `http://localhost:5000`.
